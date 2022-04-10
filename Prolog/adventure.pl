@@ -1,13 +1,20 @@
 /* <The name of this game>, by <your name goes here>. */
 
 :- dynamic i_am_at/1, at/2, holding/1.
-:- retractall(at(_, _)), retractall(i_am_at(_)), retractall(alive(_)).
+:- retractall(at(_, _)), retractall(holding(_)), retractall(i_am_at(_)), retractall(alive(_)).
 
-i_am_at(someplace).
+i_am_at(kitchen).
 
-path(someplace, n, someplace).
+path(kitchen, n, kitchen).
 
-at(thing, someplace).
+at(bowl, kitchen).
+at(cornflakes, kitchen).
+at(milk, kitchen).
+
+crafting_recipe(bowl, milk, bowl_with_milk).
+crafting_recipe(bowl_with_milk, cornflakes, monster_meal).
+crafting_recipe(bowl, cornflakes, bowl_with_cornflakes).
+crafting_recipe(bowl_with_cornflakes, milk, breakfast).
 
 /* These rules describe how to pick up an object. */
 
@@ -43,6 +50,20 @@ drop(_) :-
         write('You aren''t holding it!'),
         nl.
 
+craft(X, Y) :-
+        holding(X),
+        holding(Y),
+        crafting_recipe(X, Y, A),
+        !,
+        assert(holding(A)),
+        retract(holding(X)),
+        retract(holding(Y)),
+        write('You created '), write(A),
+        look.
+
+craft(_, _) :-
+        write('Something went wrong!'),
+        nl.
 
 /* These rules define the direction letters as calls to go/1. */
 
@@ -75,7 +96,8 @@ look :-
         describe(Place),
         nl,
         notice_objects_at(Place),
-        nl.
+        nl,
+        notice_holding_objects.
 
 
 /* These rules set up a loop to mention all the objects
@@ -87,6 +109,11 @@ notice_objects_at(Place) :-
         fail.
 
 notice_objects_at(_).
+
+notice_holding_objects() :-
+        holding(X),
+        write('You have '), write(X), write(' in the inventory.'), nl,
+        fail.
 
 
 /* This rule tells how to die. */
@@ -132,5 +159,5 @@ start :-
 /* These rules describe the various rooms.  Depending on
    circumstances, a room may have more than one description. */
 
-describe(someplace) :- write('You are someplace.'), nl.
+describe(kitchen) :- write('You are in kitchen.'), nl.
 
