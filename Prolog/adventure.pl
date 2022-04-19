@@ -1,9 +1,10 @@
+#!/usr/bin/env swipl
 /* Pieseły i Locheły, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka. */
 
-:- dynamic i_am_at/1, at/2, holding/1.
+:- dynamic i_am_at/1, at/2, holding/1, value_HP/2.
 :- retractall(at(_, _)), retractall(holding(_)), retractall(i_am_at(_)), retractall(alive(_)).
 
-i_am_at(entance).
+i_am_at(attendant_room).
 
 % Map of the Egyptian tomb
 path(entance, n, antechamber).
@@ -37,6 +38,13 @@ path(sarcophagus, e, hidden_exit).
 path(hidden_exit, n, sarcophagus).
 path(hidden_exit, s, tresure_room).
 
+enemy_at(skele_cat, attendant_room).
+
+value_HP(skele_cat, 3).
+value_HP(you, 5).
+
+defense(skele_cat, 13).
+defense(you, 13).
 % at(bowl, kitchen).
 % at(cornflakes, kitchen).
 % at(milk, kitchen).
@@ -110,34 +118,92 @@ w :- go(w).
 
 go(Direction) :-
         i_am_at(Here),
+        not(enemy_at(_, Here)),
         path(Here, Direction, There),
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
         !, look.
 
+go(Direction) :-
+        i_am_at(Here),
+        enemy_at(_, Here),
+        path(Here, Direction, _),
+        write('You cannot exit room, when is monster in it.').
+
 go(_) :-
         write('You can''t go that way.').
-
-
 /* This rule tells how to look about you. */
-
 look :-
         i_am_at(Place),
         describe(Place),
         nl,
         notice_objects_at(Place),
-        nl,
-        notice_holding_objects.
+        notice_enemies_at(Place),
+        notice_holding_objects. 
 
 
-/* These rules set up a loop to mention all the objects in your vicinity. */
+/* These rules are for combat. */
+attack(Enemy) :-
+        i_am_at(Place),
+        enemy_at(Enemy, Place),
+        random_between(1, 20, MyRoll),
+        random_between(1, 20, EnemyRoll),
+        value_HP(Enemy, EnemyHP), EnemyHP > 0,
+        hit(you, Enemy, MyRoll),
+        hit(Enemy, you, EnemyRoll).
 
+attack(Enemy) :-
+        write('You cannot attack '), write(Enemy), write(' in this place.'), nl.
+
+hit(Attacker, Defender, Roll) :-
+        defense(Defender, Strength),
+        Roll >= Strength,
+        value_HP(Defender, HP),
+        !,
+        plus(NewHP, 1, HP),
+        retract(value_HP(Defender, HP)),
+        assert(value_HP(Defender, NewHP)),
+        write(Attacker), write(' attacks '), write(Defender), write(' ('), write(Roll), write('>='), write(Strength), write('). He has now '), write(NewHP), write(' HP.'), nl.
+
+hit(Attacker, Defender, Roll) :-
+        defense(Defender, Strength),
+        Roll < Strength,
+        write(Attacker), write(' failed to attack '), write(Defender), write(' ('), write(Roll), write('<'), write(Strength), write(').'), nl.
+
+flee(Direction) :-
+        i_am_at(Here),
+        enemy_at(Enemy, Here),
+        go(Direction),
+        !,
+        path(Here, Direction, There),
+        value_HP(you, HP),
+        plus(NewHP, 1, HP),
+        retract(value_HP(you, HP)),
+        assert(value_HP(you, NewHP)),
+        retract(i_am_at(Here)),
+        assert(i_am_at(There)),
+        write(Enemy), write(' attacks you when you leave. You has now '), write(NewHP), write(' HP.'), nl,
+        !, look.
+
+flee(_) :-
+        write('You can''t go that way.').
+
+/* These rules are for noticing things. */
 notice_objects_at(Place) :-
         at(X, Place),
         write('There is a '), write(X), write(' here.'), nl,
         fail.
 
-notice_objects_at(_).
+notice_objects_at(_) :-
+        write('There is a nothing here.'), nl.
+
+
+notice_enemies_at(Place) :-
+        enemy_at(X, Place),
+        write('There is a '), write(X), write(' here. Time to fight!'), nl,
+        fail.
+
+notice_enemies_at(_).
 
 notice_holding_objects() :-
         holding(X),
@@ -188,4 +254,5 @@ start :-
 /* These rules describe the various rooms.  Depending on circumstances, a room may have more than one description. */
 
 describe(entance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl.
+describe(attendant_room) :- write('You are in simple room.'), nl.
 
