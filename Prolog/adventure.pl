@@ -1,8 +1,8 @@
 #!/usr/bin/env swipl
-/* Pieseły i Locheły, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka. */
+/* Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka. */
 
-:- dynamic i_am_at/1, at/2, holding/1, value_HP/2.
-:- retractall(at(_, _)), retractall(holding(_)), retractall(i_am_at(_)), retractall(alive(_)).
+:- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, value_HP/2.
+:- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(value_HP(_, _)).
 
 i_am_at(attendant_room).
 
@@ -40,10 +40,10 @@ path(hidden_exit, s, tresure_room).
 
 enemy_at(skele_cat, attendant_room).
 
-value_HP(skele_cat, 3).
-value_HP(you, 5).
+value_HP(skele_cat, 1).
+value_HP(you, 6).
 
-defense(skele_cat, 13).
+defense(skele_cat, 10).
 defense(you, 13).
 % at(bowl, kitchen).
 % at(cornflakes, kitchen).
@@ -143,33 +143,33 @@ look :-
 
 
 /* These rules are for combat. */
+alive(Enemy) :-
+        value_HP(Enemy, EnemyHP),
+        EnemyHP > 0.
+
 attack(Enemy) :-
         i_am_at(Place),
         enemy_at(Enemy, Place),
+        alive(Enemy),
         random_between(1, 20, MyRoll),
         random_between(1, 20, EnemyRoll),
-        value_HP(Enemy, EnemyHP), EnemyHP > 0,
-        hit(you, Enemy, MyRoll),
-        hit(Enemy, you, EnemyRoll).
-
+        (alive(Enemy) -> hit(you, Enemy, MyRoll) ; true),
+        (alive(Enemy) -> hit(Enemy, you, EnemyRoll) ; true),
+        !.
 attack(Enemy) :-
         write('You cannot attack '), write(Enemy), write(' in this place.'), nl.
 
 hit(Attacker, Defender, Roll) :-
         defense(Defender, Strength),
-        Roll >= Strength,
-        value_HP(Defender, HP),
-        !,
-        plus(NewHP, 1, HP),
-        retract(value_HP(Defender, HP)),
-        assert(value_HP(Defender, NewHP)),
-        write(Attacker), write(' attacks '), write(Defender), write(' ('), write(Roll), write('>='), write(Strength), write('). He has now '), write(NewHP), write(' HP.'), nl.
-
-hit(Attacker, Defender, Roll) :-
-        defense(Defender, Strength),
-        Roll < Strength,
-        write(Attacker), write(' failed to attack '), write(Defender), write(' ('), write(Roll), write('<'), write(Strength), write(').'), nl.
-
+        (Roll >= Strength ->
+                value_HP(Defender, HP),
+                plus(NewHP, 1, HP),
+                retract(value_HP(Defender, HP)),
+                assert(value_HP(Defender, NewHP)),
+                write(Attacker), write(' attacks '), write(Defender), write(' ('), write(Roll), write('>='), write(Strength), write('). He has now '), write(NewHP), write(' HP.'), nl,
+                (NewHP == 0 -> write(Defender), write(' died.'), nl ; true)
+        ;
+                write(Attacker), write(' failed to attack '), write(Defender), write(' ('), write(Roll), write('<'), write(Strength), write(').'), nl).
 flee(Direction) :-
         i_am_at(Here),
         enemy_at(Enemy, Here),
@@ -199,8 +199,9 @@ notice_objects_at(_) :-
 
 
 notice_enemies_at(Place) :-
-        enemy_at(X, Place),
-        write('There is a '), write(X), write(' here. Time to fight!'), nl,
+        enemy_at(Enemy, Place),
+        alive(Enemy),
+        write('There is a '), write(Enemy), write(' here. Time to fight!'), nl,
         fail.
 
 notice_enemies_at(_).
