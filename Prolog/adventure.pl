@@ -26,17 +26,17 @@ path(altar_room, e, corridor).
 path(false_floor_room, s, corridor).
 path(false_floor_room, n, trap_corridor).
 path(trap_corridor, s, false_floor_room).
-path(trap_corridor, n, tresure_room).
+path(trap_corridor, n, treasure_room).
 path(serket_chamber, w, accolite_chamber_2).
 path(serket_chamber, n, guardian).
 path(guardian, s, serket_chamber).
 path(guardian, n, sarcophagus).
-path(tresure_room, s, trap_corridor).
-path(tresure_room, n, hidden_exit).
+path(treasure_room, s, trap_corridor).
+path(treasure_room, n, hidden_exit).
 path(sarcophagus, s, guardian).
 path(sarcophagus, e, hidden_exit).
 path(hidden_exit, n, sarcophagus).
-path(hidden_exit, s, tresure_room).
+path(hidden_exit, s, treasure_room).
 
 enemy_at(skele_cat, attendant_room).
 
