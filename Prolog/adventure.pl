@@ -1,9 +1,9 @@
 #!/usr/bin/env swipl
 /* Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka. */
 
-:- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, value_HP/2.
-:- discontiguous value_HP/2, defense/2, enemy_at/2.
-:- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(value_HP(_, _)).
+:- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, health/2.
+:- discontiguous health/2, defense/2, enemy_at/2, damage/2.
+:- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(health(_, _)).
 
 i_am_at(entrance).
 
@@ -41,26 +41,29 @@ path(hidden_exit, n, sarcophagus).
 path(hidden_exit, s, treasure_room).
 
 /* Doge (player) stats */
-value_HP(you, 6).
-defense(you, 13).
+health(you, 6).
+defense(you, 12).
+damage(you, 4).
 
 
 /* Enemies. */
 % Skeleton cat
 enemy_at(skele_cat_1, attendant_room).
-value_HP(skele_cat_1, 3).
-defense(skele_cat_1, 10).
+health(skele_cat_1, 3).
+defense(skele_cat_1, 12).
+damage(skele_cat_1, 2).
 
 % Catmint guardian
 enemy_at(catmint_guardian, guardian).
-value_HP(catmint_guardian, 10).
-defense(catmint_guardian, 15).
+health(catmint_guardian, 12).
+defense(catmint_guardian, 9).
+damage(skele_cat_1, 6).
 
 % Fallen cat
 enemy_at(fallen_cat, sarcophagus).
-value_HP(fallen_cat, 10).
-defense(fallen_cat, 15).
-
+health(fallen_cat, 6).
+defense(fallen_cat, 12).
+damage(skele_cat_1, 4).
 
 /* These rules describe how to pick up an object. */
 
@@ -149,12 +152,12 @@ look :-
 
 /* These rules are for combat. */
 alive(you) :-
-        value_HP(you, HP),
+        health(you, HP),
         HP =< 0,
         write('You are dead. Please enter the "halt." command1.'), fail, !.
 
 alive(Enemy) :-
-        value_HP(Enemy, EnemyHP),
+        health(Enemy, EnemyHP),
         EnemyHP > 0, !.
 
 attack(Enemy) :-
@@ -174,28 +177,32 @@ hit(Attacker, Defender) :-
         defense(Defender, Strength),
         random_between(1, 20, Roll),
         (Roll >= Strength ->
-                value_HP(Defender, HP),
-                plus(NewHP, 1, HP),
-                retract(value_HP(Defender, HP)),
-                assert(value_HP(Defender, NewHP)),
-                write(Attacker), write(' attacks '), write(Defender), write(' ('), write(Roll), write('>='), write(Strength), write('). He has now '), write(NewHP), write(' HP.'), nl,
-                (NewHP == 0 -> write(Defender), write(' died.'), nl ; true)
+                damage(Attacker, MaxDamage),
+                random_between(1, MaxDamage, Damage),
+                write(Attacker), write(' attacks '), write(Defender), write(' ('), write(Roll), write('>='), 
+                write(Strength), write(') ['), write(Damage), write(' dmg]. '),
+                harm(Defender, Damage)
         ;
                 write(Attacker), write(' failed to attack '), write(Defender), write(' ('), write(Roll), write('<'), write(Strength), write(').'), nl).
+
+harm(Character, Damage) :-
+        health(Character, HP),
+
+        plus(NewHP, Damage, HP),
+        retract(health(Character, HP)),
+        assert(health(Character, NewHP)),
+        (NewHP =< 0 -> write(Character), write(' died.'), nl ; write('Remaining HP: '), write(NewHP), nl).
 
 flee(Direction) :-
         i_am_at(Here),
         enemy_at(Enemy, Here),
         path(Here, Direction, There),
-        value_HP(you, HP),
         alive(you),
 
-        plus(NewHP, 1, HP),
-        retract(value_HP(you, HP)),
-        assert(value_HP(you, NewHP)),
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
-        write(Enemy), write(' attacks you when you leave. You has now '), write(NewHP), write(' HP.'), nl,
+        write(Enemy), write(' attacks you when you leave. '), 
+        harm(you, 1),
         !, look.
 
 flee(_) :-
@@ -258,7 +265,6 @@ inventory :-
    routine requests the user to perform the final "halt." */
 
 /* This rule just writes out game instructions. */
-
 instructions :-
         write('Enter commands using standard Prolog syntax.'), nl,
         write('Available commands are:'), nl,
@@ -276,14 +282,12 @@ instructions :-
 
 
 /* This rule prints out instructions and tells where you are. */
-
 start :-
         instructions,
         look.
 
 
 /* These rules describe the various rooms.  Depending on circumstances, a room may have more than one description. */
-
 describe(entrance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl, !.
 describe(attendant_room) :- write('You are in simple room.'), nl, !.
 describe(_) :- write('This room is not implemented'), nl.
