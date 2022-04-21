@@ -45,16 +45,6 @@ value_HP(you, 6).
 
 defense(skele_cat, 10).
 defense(you, 13).
-% at(bowl, kitchen).
-% at(cornflakes, kitchen).
-% at(milk, kitchen).
-
-% crafting_recipe(bowl, milk, bowl_with_milk).
-% crafting_recipe(bowl_with_milk, cornflakes, monster_meal).
-% crafting_recipe(bowl, cornflakes, bowl_with_cornflakes).
-% crafting_recipe(bowl_with_cornflakes, milk, breakfast).
-
-/* These rules describe how to pick up an object. */
 
 take(X) :-
         holding(X),
@@ -73,9 +63,7 @@ take(_) :-
         write('I don''t see it here.'),
         nl.
 
-
 /* These rules describe how to put down an object. */
-
 drop(X) :-
         holding(X),
         i_am_at(Place),
@@ -88,23 +76,6 @@ drop(_) :-
         write('You aren''t holding it!'),
         nl.
 
-% craft(X, Y) :-
-%         holding(X),
-%         holding(Y),
-%         crafting_recipe(X, Y, A),
-%         !,
-%         assert(holding(A)),
-%         retract(holding(X)),
-%         retract(holding(Y)),
-%         write('You created '), write(A),
-%         look.
-
-% craft(_, _) :-
-%         write('Something went wrong!'),
-%         nl.
-
-/* These rules define the direction letters as calls to go/1. */
-
 n :- go(n).
 
 s :- go(s).
@@ -115,23 +86,24 @@ w :- go(w).
 
 
 /* This rule tells how to move in a given direction. */
-
 go(Direction) :-
         i_am_at(Here),
         not(enemy_at(_, Here)),
         path(Here, Direction, There),
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
-        !, look.
+        !.
 
 go(Direction) :-
         i_am_at(Here),
         enemy_at(_, Here),
         path(Here, Direction, _),
-        write('You cannot exit room, when is monster in it.').
+        write('You cannot exit room, when is monster in it.'), nl,
+        !.
 
 go(_) :-
         write('You can''t go that way.').
+
 /* This rule tells how to look about you. */
 look :-
         i_am_at(Place),
@@ -151,16 +123,16 @@ attack(Enemy) :-
         i_am_at(Place),
         enemy_at(Enemy, Place),
         alive(Enemy),
-        random_between(1, 20, MyRoll),
-        random_between(1, 20, EnemyRoll),
-        (alive(Enemy) -> hit(you, Enemy, MyRoll) ; true),
-        (alive(Enemy) -> hit(Enemy, you, EnemyRoll) ; true),
+        ((alive(Enemy), alive(you)) -> hit(you, Enemy) ; true),
+        ((alive(Enemy), alive(you)) -> hit(Enemy, you) ; true),
         !.
+
 attack(Enemy) :-
         write('You cannot attack '), write(Enemy), write(' in this place.'), nl.
 
-hit(Attacker, Defender, Roll) :-
+hit(Attacker, Defender) :-
         defense(Defender, Strength),
+        random_between(1, 20, Roll),
         (Roll >= Strength ->
                 value_HP(Defender, HP),
                 plus(NewHP, 1, HP),
@@ -170,12 +142,12 @@ hit(Attacker, Defender, Roll) :-
                 (NewHP == 0 -> write(Defender), write(' died.'), nl ; true)
         ;
                 write(Attacker), write(' failed to attack '), write(Defender), write(' ('), write(Roll), write('<'), write(Strength), write(').'), nl).
+
 flee(Direction) :-
         i_am_at(Here),
         enemy_at(Enemy, Here),
-        go(Direction),
-        !,
         path(Here, Direction, There),
+        !,
         value_HP(you, HP),
         plus(NewHP, 1, HP),
         retract(value_HP(you, HP)),
@@ -186,7 +158,7 @@ flee(Direction) :-
         !, look.
 
 flee(_) :-
-        write('You can''t go that way.').
+        write('You can\'t go that way.').
 
 /* These rules are for noticing things. */
 notice_objects_at(Place) :-
@@ -196,7 +168,6 @@ notice_objects_at(Place) :-
 
 notice_objects_at(_) :-
         write('There is a nothing here.'), nl.
-
 
 notice_enemies_at(Place) :-
         enemy_at(Enemy, Place),
@@ -210,9 +181,6 @@ notice_holding_objects() :-
         holding(X),
         write('You have '), write(X), write(' in the inventory.'), nl,
         fail.
-
-
-/* This rule tells how to die. */
 
 die :-
         finish.
@@ -254,6 +222,6 @@ start :-
 
 /* These rules describe the various rooms.  Depending on circumstances, a room may have more than one description. */
 
-describe(entance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl.
-describe(attendant_room) :- write('You are in simple room.'), nl.
-
+describe(entance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl, !.
+describe(attendant_room) :- write('You are in simple room.'), nl, !.
+describe(_) :- write('This room is not implemented'), nl.
