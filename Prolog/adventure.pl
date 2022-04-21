@@ -5,7 +5,7 @@
 :- discontiguous health/2, defense/2, enemy_at/2, damage/2.
 :- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(health(_, _)).
 
-i_am_at(entrance).
+i_am_at(attendant_room).
 
 /* Map of the Egyptian tomb */
 % Rooms
@@ -148,7 +148,17 @@ look :-
         alive(you),
 
         describe(Place),
+        findall(Direction, path(acolyte_chamber_1, Direction, _), Directions),
+        write('Possible exits: '), write(Directions), nl,
         notice_enemies_at(Place).
+
+notice_enemies_at(Place) :-
+        enemy_at(Enemy, Place),
+        alive(Enemy),
+
+        write('There is a '), write(Enemy), write(' here. Time to fight!'), nl, !.
+
+notice_enemies_at(_).
 
 /* These rules are for combat. */
 alive(you) :-
@@ -235,14 +245,6 @@ search :-
 
 room_cleared(Place) :-
         not(enemy_at(_, Place)) ; (enemy_at(Enemy, Place), not(alive(Enemy))).
-
-notice_enemies_at(Place) :-
-        enemy_at(Enemy, Place),
-        alive(Enemy),
-
-        write('There is a '), write(Enemy), write(' here. Time to fight!'), nl, !.
-
-notice_enemies_at(_).
 
 % Inventory functions
 i :- inventory.
