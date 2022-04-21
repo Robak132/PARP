@@ -160,7 +160,7 @@ open_door(DoorName) :-
 /* Rules to go through the door */
 go_through_door(DoorName) :-
         door_closed(DoorName),
-        write("Trying to open door..."), nl.
+        write("Trying to open door..."), nl,
         open_door(DoorName).
 
 
