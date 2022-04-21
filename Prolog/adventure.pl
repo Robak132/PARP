@@ -78,9 +78,7 @@ take(_) :-
         write('I don''t see it here.'),
         nl.
 
-
 /* These rules describe how to put down an object. */
-
 drop(X) :-
         holding(X),
         i_am_at(Place),
@@ -106,7 +104,6 @@ w :- go(w).
 
 
 /* This rule tells how to move in a given direction. */
-
 go(Direction) :-
         i_am_at(Here),
         not(enemy_at(_, Here)),
@@ -119,10 +116,12 @@ go(Direction) :-
         i_am_at(Here),
         enemy_at(_, Here),
         path(Here, Direction, _),
-        write('You cannot exit room, when is monster in it.').
+        write('You cannot exit room, when is monster in it.'), nl,
+        !.
 
 go(_) :-
         write('You can''t go that way.').
+
 /* This rule tells how to look about you. */
 look :-
         i_am_at(Place),
@@ -142,16 +141,16 @@ attack(Enemy) :-
         i_am_at(Place),
         enemy_at(Enemy, Place),
         alive(Enemy),
-        random_between(1, 20, MyRoll),
-        random_between(1, 20, EnemyRoll),
-        (alive(Enemy) -> hit(you, Enemy, MyRoll) ; true),
-        (alive(Enemy) -> hit(Enemy, you, EnemyRoll) ; true),
+        ((alive(Enemy), alive(you)) -> hit(you, Enemy) ; true),
+        ((alive(Enemy), alive(you)) -> hit(Enemy, you) ; true),
         !.
+
 attack(Enemy) :-
         write('You cannot attack '), write(Enemy), write(' in this place.'), nl.
 
-hit(Attacker, Defender, Roll) :-
+hit(Attacker, Defender) :-
         defense(Defender, Strength),
+        random_between(1, 20, Roll),
         (Roll >= Strength ->
                 value_HP(Defender, HP),
                 plus(NewHP, 1, HP),
@@ -161,12 +160,12 @@ hit(Attacker, Defender, Roll) :-
                 (NewHP == 0 -> write(Defender), write(' died.'), nl ; true)
         ;
                 write(Attacker), write(' failed to attack '), write(Defender), write(' ('), write(Roll), write('<'), write(Strength), write(').'), nl).
+
 flee(Direction) :-
         i_am_at(Here),
         enemy_at(Enemy, Here),
-        go(Direction),
-        !,
         path(Here, Direction, There),
+        !,
         value_HP(you, HP),
         plus(NewHP, 1, HP),
         retract(value_HP(you, HP)),
@@ -177,7 +176,7 @@ flee(Direction) :-
         !, look.
 
 flee(_) :-
-        write('You can''t go that way.').
+        write('You can\'t go that way.').
 
 /* These rules are for noticing things. */
 notice_objects_at(Place) :-
@@ -187,7 +186,6 @@ notice_objects_at(Place) :-
 
 notice_objects_at(_) :-
         write('There is a nothing here.'), nl.
-
 
 notice_enemies_at(Place) :-
         enemy_at(Enemy, Place),
@@ -202,12 +200,8 @@ notice_holding_objects() :-
         write('You have '), write(X), write(' in the inventory.'), nl,
         fail.
 
-
-/* This rule tells how to die. */
-
 die :-
         finish.
-
 
 /* Under UNIX, the "halt." command quits Prolog but does not
    remove the output window. On a PC, however, the window
@@ -245,5 +239,6 @@ start :-
 
 /* These rules describe the various rooms.  Depending on circumstances, a room may have more than one description. */
 
-describe(entrance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl.
-describe(attendant_room) :- write('You are in simple room.'), nl.
+describe(entrance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl, !.
+describe(attendant_room) :- write('You are in simple room.'), nl, !.
+describe(_) :- write('This room is not implemented'), nl.
