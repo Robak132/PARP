@@ -6,28 +6,29 @@
 
 i_am_at(entrance).
 
-% Map of the Egyptian tomb
+/* Map of the Egyptian tomb */
+% Rooms
 path(entrance, n, antechamber).
 path(antechamber, n, altar_room).
 path(antechamber, s, entrance).
 path(antechamber, w, jar_room).
 path(antechamber, e, attendant_room).
 path(jar_room, e, antechamber).
-path(jar_room, w, accolite_chamber_1).
+path(jar_room, w, acolyte_chamber_1).
 path(attendant_room, w, antechamber).
 path(attendant_room, n, corridor).
 path(corridor, n, false_floor_room).
 path(corridor, w, altar_room).
-path(accolite_chamber_1, n, accolite_chamber_2).
-path(accolite_chamber_2, s, accolite_chamber_1).
-path(accolite_chamber_2, e, serket_chamber).
+path(acolyte_chamber_1, n, acolyte_chamber_2).
+path(acolyte_chamber_2, s, acolyte_chamber_1).
+path(acolyte_chamber_2, e, serket_chamber).
 path(altar_room, s, antechamber).
 path(altar_room, e, corridor).
 path(false_floor_room, s, corridor).
 path(false_floor_room, n, trap_corridor).
 path(trap_corridor, s, false_floor_room).
 path(trap_corridor, n, treasure_room).
-path(serket_chamber, w, accolite_chamber_2).
+path(serket_chamber, w, acolyte_chamber_2).
 path(serket_chamber, n, guardian).
 path(guardian, s, serket_chamber).
 path(guardian, n, sarcophagus).
@@ -41,6 +42,7 @@ path(hidden_exit, s, treasure_room).
 /* Doge (player) stats */
 value_HP(you, 6).
 defense(you, 13).
+
 
 /* Enemies. */
 % Skeleton cat
@@ -77,6 +79,7 @@ take(X) :-
 take(_) :-
         write('I don''t see it here.'),
         nl.
+
 
 /* These rules describe how to put down an object. */
 drop(X) :-
@@ -121,6 +124,7 @@ go(Direction) :-
 
 go(_) :-
         write('You can''t go that way.').
+
 
 /* This rule tells how to look about you. */
 look :-
@@ -178,6 +182,7 @@ flee(Direction) :-
 flee(_) :-
         write('You can\'t go that way.').
 
+
 /* These rules are for noticing things. */
 notice_objects_at(Place) :-
         at(X, Place),
@@ -202,6 +207,7 @@ notice_holding_objects() :-
 
 die :-
         finish.
+
 
 /* Under UNIX, the "halt." command quits Prolog but does not
    remove the output window. On a PC, however, the window
