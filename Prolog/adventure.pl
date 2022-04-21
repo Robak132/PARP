@@ -7,9 +7,9 @@
 i_am_at(attendant_room).
 
 % Map of the Egyptian tomb
-path(entance, n, antechamber).
+path(entrance, n, antechamber).
 path(antechamber, n, altar_room).
-path(antechamber, s, entance).
+path(antechamber, s, entrance).
 path(antechamber, w, jar_room).
 path(antechamber, e, attendant_room).
 path(jar_room, e, antechamber).
@@ -232,5 +232,5 @@ start :-
 
 /* These rules describe the various rooms.  Depending on circumstances, a room may have more than one description. */
 
-describe(entance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl.
+describe(entrance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl.
 describe(attendant_room) :- write('You are in simple room.'), nl.
