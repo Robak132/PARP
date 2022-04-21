@@ -1,11 +1,12 @@
 #!/usr/bin/env swipl
 /* Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka. */
 
-:- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, health/2.
+:- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, health/2, door_closed/1.
 :- discontiguous health/2, defense/2, enemy_at/2, damage/2, strength/2.
-:- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(health(_, _)).
+:- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(health(_, _)), retractall(door_closed(_)).
 
-i_am_at(attendant_room).
+
+i_am_at(entrance).
 
 /* Map of the Egyptian tomb */
 % Rooms
@@ -21,6 +22,7 @@ path(attendant_room, n, corridor).
 path(corridor, n, false_floor_room).
 path(corridor, w, altar_room).
 path(acolyte_chamber_1, n, acolyte_chamber_2).
+path(acolyte_chamber_1, e, jar_room).
 path(acolyte_chamber_2, s, acolyte_chamber_1).
 path(acolyte_chamber_2, e, serket_chamber).
 path(altar_room, s, antechamber).
@@ -39,6 +41,16 @@ path(sarcophagus, s, guardian).
 path(sarcophagus, e, hidden_exit).
 path(hidden_exit, n, sarcophagus).
 path(hidden_exit, s, treasure_room).
+
+% Door
+door_between(acolyte_chamber_2, normal_door, serket_chamber).
+door_between(serket_chamber, normal_door, acolyte_chamber_2).
+door_between(acolyte_chamber_2, moonlight_door, acolyte_chamber_1).
+door_between(acolyte_chamber_1, moonlight_door, acolyte_chamber_2).
+
+door_closed(normal_door).
+door_closed(moonlight_door).
+
 
 /* Doge (player) stats */
 health(you, 6).
@@ -69,12 +81,20 @@ defense(fallen_cat, 12).
 strength(fallen_cat, 0).
 damage(skele_cat_1, 4).
 
+/* Keys and objects */
+% Key opening the door between acolyte_chamber_2 and serket_chamber, lying in attendant_room
+at(key, attendant_room).
+
+% Torch that needs to be carried out to open the door between acolyte_chamber_1 and acolyte_chamber_2, hanging in acolyte_chamber_1
+at(torch, acolyte_chamber_1).
+
+
 /* These rules describe how to pick up an object. */
 
 take(X) :-
         holding(X),
         alive(you),
-        
+
         write('You''re already holding it!'),
         !, nl.
 
@@ -124,13 +144,54 @@ e :- go(e).
 w :- go(w).
 
 
+/* Rules to open door */
+open_door(normal_door) :-
+        holding(key),
+
+        retract(door_closed(normal_door)),
+        write("You unlocked the door.").
+
+open_door(moonlight_door) :-
+        door_closed(moonlight_door),
+        not(holding(torch)),
+        not(at(torch, acolyte_chamber_1)),
+        not(at(torch, acolyte_chamber_2)),
+
+        retract(door_closed(moonlight_door)),
+        write("You unlocked the moonlight door."), nl.
+
+open_door(DoorName) :-
+        write("The "), write(DoorName), write(" is locked."), nl, fail.
+
+/* Rules to go through the door */
+go_through_door(DoorName) :-
+        door_closed(DoorName),
+
+        write("Trying to open door..."), nl,
+        open_door(DoorName).
+
+go_through_door(DoorName) :-
+        not(door_closed(DoorName)),
+
+        write("The door is opened and you went through."), nl.
+
+
+/* Rules to check door */
+check_door(Here, There) :-
+        door_between(Here, DoorName, There),
+        go_through_door(DoorName).
+
+check_door(Here, There) :-
+        not(door_between(Here, _, There)).
+
+
 /* This rule tells how to move in a given direction. */
 go(Direction) :-
         i_am_at(Here),
         room_cleared(Here),
         path(Here, Direction, There),
         alive(you),
-
+        check_door(Here, There),
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
         !, look.
@@ -144,7 +205,7 @@ go(Direction) :-
         write('You cannot exit room, when is monster in it.'), nl, !.
 
 go(_) :-
-        write('You can''t go that way.').
+        write('You can''t go that way.'), nl.
 
 /* This rule tells how to look about you. */
 look :-
@@ -152,7 +213,7 @@ look :-
         alive(you),
 
         describe(Place),
-        findall(Direction, path(acolyte_chamber_1, Direction, _), Directions),
+        findall(Direction, path(Place, Direction, _), Directions),
         write('Possible exits: '), write(Directions), nl,
         notice_enemies_at(Place).
 
@@ -218,7 +279,7 @@ flee(Direction) :-
 
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
-        write(Enemy), write(' attacks you when you leave. '), 
+        write(Enemy), write(' attacks you when you leave. '),
         harm(you, 1),
         !, look.
 
