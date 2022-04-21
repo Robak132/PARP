@@ -4,7 +4,7 @@
 :- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, value_HP/2.
 :- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(value_HP(_, _)).
 
-i_am_at(entrance).
+i_am_at(attendant_room).
 
 /* Map of the Egyptian tomb */
 % Rooms
@@ -131,9 +131,7 @@ look :-
         i_am_at(Place),
         describe(Place),
         nl,
-        notice_objects_at(Place),
-        notice_enemies_at(Place),
-        notice_holding_objects. 
+        notice_enemies_at(Place).
 
 
 /* These rules are for combat. */
@@ -183,27 +181,48 @@ flee(_) :-
         write('You can\'t go that way.').
 
 
-/* These rules are for noticing things. */
-notice_objects_at(Place) :-
+/* These rules are for searching rooms. */
+search :-
+        i_am_at(Place),
         at(X, Place),
-        write('There is a '), write(X), write(' here.'), nl,
-        fail.
+        not(enemy_at(_, Place)),
+        write('There is a '), write(X), write(' here.'), nl, !.
 
-notice_objects_at(_) :-
-        write('There is a nothing here.'), nl.
+search :-
+        i_am_at(Place),
+        at(X, Place),
+        enemy_at(Enemy, Place),
+        not(alive(Enemy)),
+        write('There is a '), write(X), write(' here.'), nl, !.
+
+search :-
+        i_am_at(Place),
+        enemy_at(Enemy, Place),
+        alive(Enemy),
+        write('You can\'t search the room when is '), write(Enemy), write(' there.'), nl, !.
+
+search :-
+        i_am_at(Place),
+        not(at(_, Place)),
+        write('There is nothing here.'), nl.
 
 notice_enemies_at(Place) :-
         enemy_at(Enemy, Place),
         alive(Enemy),
-        write('There is a '), write(Enemy), write(' here. Time to fight!'), nl,
-        fail.
+        write('There is a '), write(Enemy), write(' here. Time to fight!'), nl.
 
 notice_enemies_at(_).
 
-notice_holding_objects() :-
+% Inventory functions
+i :- inventory.
+
+inventory :-
         holding(X),
-        write('You have '), write(X), write(' in the inventory.'), nl,
-        fail.
+        write('You have '), write(X), write(' in the inventory.'), nl.
+
+inventory :-
+        not(holding(_)),
+        write('You don\'t have anything in you inventory.'), nl.
 
 die :-
         finish.
