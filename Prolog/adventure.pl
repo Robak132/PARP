@@ -2,7 +2,7 @@
 /* Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka. */
 
 :- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, health/2.
-:- discontiguous health/2, defense/2, enemy_at/2, damage/2.
+:- discontiguous health/2, defense/2, enemy_at/2, damage/2, strength/2.
 :- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(health(_, _)).
 
 i_am_at(attendant_room).
@@ -43,6 +43,7 @@ path(hidden_exit, s, treasure_room).
 /* Doge (player) stats */
 health(you, 6).
 defense(you, 12).
+strength(you, 0).
 damage(you, 4).
 
 
@@ -51,18 +52,21 @@ damage(you, 4).
 enemy_at(skele_cat_1, attendant_room).
 health(skele_cat_1, 3).
 defense(skele_cat_1, 12).
+strength(skele_cat_1, 2).
 damage(skele_cat_1, 2).
 
 % Catmint guardian
 enemy_at(catmint_guardian, guardian).
 health(catmint_guardian, 12).
 defense(catmint_guardian, 9).
+strength(catmint_guardian, -4).
 damage(skele_cat_1, 6).
 
 % Fallen cat
 enemy_at(fallen_cat, sarcophagus).
 health(fallen_cat, 6).
 defense(fallen_cat, 12).
+strength(fallen_cat, 0).
 damage(skele_cat_1, 4).
 
 /* These rules describe how to pick up an object. */
@@ -174,7 +178,7 @@ attack(Enemy) :-
         i_am_at(Place),
         enemy_at(Enemy, Place),
         alive(you),
-
+        alive(Enemy),
         hit(you, Enemy),
         ((alive(Enemy)) -> hit(Enemy, you) ; true), !.
 
@@ -184,16 +188,19 @@ attack(Enemy) :-
         write('You cannot attack '), write(Enemy), write(' in this place.'), nl, !.
 
 hit(Attacker, Defender) :-
-        defense(Defender, Strength),
+        defense(Defender, Defense),
+        strength(Attacker, Strength),
+        plus(Strength, Defense, ModDefense),
+
         random_between(1, 20, Roll),
-        (Roll >= Strength ->
+        (Roll >= ModDefense ->
                 damage(Attacker, MaxDamage),
                 random_between(1, MaxDamage, Damage),
                 write(Attacker), write(' attacks '), write(Defender), write(' ('), write(Roll), write('>='), 
-                write(Strength), write(') ['), write(Damage), write(' dmg]. '),
+                write(ModDefense), write(') ['), write(Damage), write(' dmg]. '),
                 harm(Defender, Damage)
         ;
-                write(Attacker), write(' failed to attack '), write(Defender), write(' ('), write(Roll), write('<'), write(Strength), write(').'), nl).
+                write(Attacker), write(' failed to attack '), write(Defender), write(' ('), write(Roll), write('<'), write(ModDefense), write(').'), nl).
 
 harm(Character, Damage) :-
         health(Character, HP),
