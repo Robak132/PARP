@@ -2,6 +2,7 @@
 /* Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka. */
 
 :- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, value_HP/2.
+:- discontiguous value_HP/2, defense/2, enemy_at/2.
 :- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(value_HP(_, _)).
 
 i_am_at(entrance).
@@ -47,7 +48,7 @@ defense(you, 13).
 /* Enemies. */
 % Skeleton cat
 enemy_at(skele_cat_1, attendant_room).
-value_HP(skele_cat_1, 1).
+value_HP(skele_cat_1, 3).
 defense(skele_cat_1, 10).
 
 % Catmint guardian
@@ -109,7 +110,7 @@ w :- go(w).
 /* This rule tells how to move in a given direction. */
 go(Direction) :-
         i_am_at(Here),
-        not(enemy_at(_, Here)),
+        room_cleared(Here),
         path(Here, Direction, There),
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
@@ -185,14 +186,7 @@ flee(_) :-
 search :-
         i_am_at(Place),
         at(X, Place),
-        not(enemy_at(_, Place)),
-        write('There is a '), write(X), write(' here.'), nl, !.
-
-search :-
-        i_am_at(Place),
-        at(X, Place),
-        enemy_at(Enemy, Place),
-        not(alive(Enemy)),
+        room_cleared(Place),
         write('There is a '), write(X), write(' here.'), nl, !.
 
 search :-
@@ -205,6 +199,9 @@ search :-
         i_am_at(Place),
         not(at(_, Place)),
         write('There is nothing here.'), nl.
+
+room_cleared(Place) :-
+        not(enemy_at(_, Place)) ; (enemy_at(Enemy, Place), not(alive(Enemy))).
 
 notice_enemies_at(Place) :-
         enemy_at(Enemy, Place),
@@ -247,9 +244,12 @@ instructions :-
         write('Available commands are:'), nl,
         write('start.             -- to start the game.'), nl,
         write('n.  s.  e.  w.     -- to go in that direction.'), nl,
+        write('flee(Direction)    -- to flee from combat.'), nl,
         write('take(Object).      -- to pick up an object.'), nl,
         write('drop(Object).      -- to put down an object.'), nl,
         write('look.              -- to look around you again.'), nl,
+        write('search.            -- to search the room.'), nl,
+        write('attack(Enemy).     -- to attack the enemy.'), nl,
         write('instructions.      -- to see this message again.'), nl,
         write('halt.              -- to end the game and quit.'), nl,
         nl.
