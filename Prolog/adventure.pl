@@ -153,16 +153,14 @@ open_door(moonlight_door) :-
         write("You unlocked the moonlight door.").
 
 open_door(DoorName) :-
-        write("The "), write(DoorName), write(" is locked."), nl,
-        !, look.
-
+        write("The "), write(DoorName), write(" is locked."), nl, fail.
 
 /* Rules to go through the door */
 go_through_door(DoorName) :-
         door_closed(DoorName),
+
         write("Trying to open door..."), nl,
         open_door(DoorName).
-
 
 go_through_door(DoorName) :-
         not(door_closed(DoorName)),
