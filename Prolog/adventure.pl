@@ -1,9 +1,9 @@
 #!/usr/bin/env swipl
 /* Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka. */
 
-:- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, health/2.
+:- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, health/2, door_closed/1.
 :- discontiguous health/2, defense/2, enemy_at/2, damage/2.
-:- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(health(_, _)).
+:- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(health(_, _)), retractall(door_closed(_)).
 
 i_am_at(entrance).
 
@@ -21,6 +21,7 @@ path(attendant_room, n, corridor).
 path(corridor, n, false_floor_room).
 path(corridor, w, altar_room).
 path(acolyte_chamber_1, n, acolyte_chamber_2).
+path(acolyte_chamber_1, e, jar_room).
 path(acolyte_chamber_2, s, acolyte_chamber_1).
 path(acolyte_chamber_2, e, serket_chamber).
 path(altar_room, s, antechamber).
@@ -207,7 +208,7 @@ look :-
         alive(you),
 
         describe(Place),
-        findall(Direction, path(acolyte_chamber_1, Direction, _), Directions),
+        findall(Direction, path(Place, Direction, _), Directions),
         write('Possible exits: '), write(Directions), nl,
         notice_enemies_at(Place).
 
