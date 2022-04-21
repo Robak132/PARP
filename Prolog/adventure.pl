@@ -141,6 +141,7 @@ w :- go(w).
 /* Rules to open door */
 open_door(normal_door) :-
         holding(key),
+
         retract(door_closed(normal_door)),
         write("You unlocked the door.").
 
@@ -149,6 +150,7 @@ open_door(moonlight_door) :-
         not(holding(torch)),
         not(at(torch, acolyte_chamber_1)),
         not(at(torch, acolyte_chamber_2)),
+
         retract(door_closed(moonlight_door)),
         write("You unlocked the moonlight door.").
 
@@ -164,6 +166,7 @@ go_through_door(DoorName) :-
 
 go_through_door(DoorName) :-
         not(door_closed(DoorName)),
+
         write("The door is opened and you went through."), nl.
 
 
