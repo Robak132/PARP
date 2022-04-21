@@ -5,7 +5,7 @@
 :- discontiguous health/2, defense/2, enemy_at/2, damage/2.
 :- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(health(_, _)).
 
-i_am_at(attendant_room).
+i_am_at(entrance).
 
 /* Map of the Egyptian tomb */
 % Rooms
@@ -40,6 +40,16 @@ path(sarcophagus, e, hidden_exit).
 path(hidden_exit, n, sarcophagus).
 path(hidden_exit, s, treasure_room).
 
+% Door
+door_between(acolyte_chamber_2, normal_door, serket_chamber).
+door_between(serket_chamber, normal_door, acolyte_chamber_2).
+door_between(acolyte_chamber_2, moonlight_door, acolyte_chamber_1).
+door_between(acolyte_chamber_1, moonlight_door, acolyte_chamber_2).
+
+door_closed(normal_door).
+door_closed(moonlight_door).
+
+
 /* Doge (player) stats */
 health(you, 6).
 defense(you, 12).
@@ -65,12 +75,20 @@ health(fallen_cat, 6).
 defense(fallen_cat, 12).
 damage(skele_cat_1, 4).
 
+/* Keys and objects */
+% Key opening the door between acolyte_chamber_2 and serket_chamber, lying in attendant_room
+at(key, attendant_room).
+
+% Torch that needs to be carried out to open the door between acolyte_chamber_1 and acolyte_chamber_2, hanging in acolyte_chamber_1
+at(torch, acolyte_chamber_1).
+
+
 /* These rules describe how to pick up an object. */
 
 take(X) :-
         holding(X),
         alive(you),
-        
+
         write('You''re already holding it!'),
         !, nl.
 
@@ -120,13 +138,53 @@ e :- go(e).
 w :- go(w).
 
 
+/* Rules to open door */
+open_door(normal_door) :-
+        holding(key),
+        retract(door_closed(normal_door)),
+        write("You unlocked the door.").
+
+open_door(moonlight_door) :-
+        door_closed(moonlight_door),
+        not(holding(torch)),
+        not(at(torch, acolyte_chamber_1)),
+        not(at(torch, acolyte_chamber_2)),
+        retract(door_closed(moonlight_door)),
+        write("You unlocked the moonlight door.").
+
+open_door(DoorName) :-
+        write("The "), write(DoorName), write(" is locked."), nl,
+        !, look.
+
+
+/* Rules to go through the door */
+go_through_door(DoorName) :-
+        door_closed(DoorName),
+        write("Trying to open door..."), nl.
+        open_door(DoorName).
+
+
+go_through_door(DoorName) :-
+        not(door_closed(DoorName)),
+        write("The door is opened and you went through."), nl.
+
+
+/* Rules to check door */
+check_door(Here, There) :-
+        door_between(Here, DoorName, There),
+        go_through_door(DoorName).
+
+check_door(Here, There) :-
+        not(door_between(Here, _, There)).
+
+
 /* This rule tells how to move in a given direction. */
 go(Direction) :-
         i_am_at(Here),
         room_cleared(Here),
         path(Here, Direction, There),
         alive(you),
-
+        check_door(Here, There),
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
         !, look.
@@ -189,7 +247,7 @@ hit(Attacker, Defender) :-
         (Roll >= Strength ->
                 damage(Attacker, MaxDamage),
                 random_between(1, MaxDamage, Damage),
-                write(Attacker), write(' attacks '), write(Defender), write(' ('), write(Roll), write('>='), 
+                write(Attacker), write(' attacks '), write(Defender), write(' ('), write(Roll), write('>='),
                 write(Strength), write(') ['), write(Damage), write(' dmg]. '),
                 harm(Defender, Damage)
         ;
@@ -211,7 +269,7 @@ flee(Direction) :-
 
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
-        write(Enemy), write(' attacks you when you leave. '), 
+        write(Enemy), write(' attacks you when you leave. '),
         harm(you, 1),
         !, look.
 
