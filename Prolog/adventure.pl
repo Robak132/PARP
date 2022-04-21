@@ -66,18 +66,24 @@ defense(fallen_cat, 15).
 
 take(X) :-
         holding(X),
+        alive(you),
+        
         write('You''re already holding it!'),
         !, nl.
 
 take(X) :-
         i_am_at(Place),
         at(X, Place),
+        alive(you),
+
         retract(at(X, Place)),
         assert(holding(X)),
         write('OK.'),
         !, nl.
 
 take(_) :-
+        alive(you),
+
         write('I don''t see it here.'),
         nl.
 
@@ -86,12 +92,16 @@ take(_) :-
 drop(X) :-
         holding(X),
         i_am_at(Place),
+        alive(you),
+
         retract(holding(X)),
         assert(at(X, Place)),
         write('OK.'),
         !, nl.
 
 drop(_) :-
+        alive(you),
+
         write('You aren''t holding it!'),
         nl.
 
@@ -112,6 +122,8 @@ go(Direction) :-
         i_am_at(Here),
         room_cleared(Here),
         path(Here, Direction, There),
+        alive(you),
+
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
         !, look.
@@ -120,36 +132,43 @@ go(Direction) :-
         i_am_at(Here),
         enemy_at(_, Here),
         path(Here, Direction, _),
-        write('You cannot exit room, when is monster in it.'), nl,
-        !.
+        alive(you),
+
+        write('You cannot exit room, when is monster in it.'), nl, !.
 
 go(_) :-
         write('You can''t go that way.').
 
-
 /* This rule tells how to look about you. */
 look :-
         i_am_at(Place),
+        alive(you),
+
         describe(Place),
-        nl,
         notice_enemies_at(Place).
 
-
 /* These rules are for combat. */
+alive(you) :-
+        value_HP(you, HP),
+        HP =< 0,
+        write('You are dead. Please enter the "halt." command1.'), fail, !.
+
 alive(Enemy) :-
         value_HP(Enemy, EnemyHP),
-        EnemyHP > 0.
+        EnemyHP > 0, !.
 
 attack(Enemy) :-
         i_am_at(Place),
         enemy_at(Enemy, Place),
-        alive(Enemy),
-        ((alive(Enemy), alive(you)) -> hit(you, Enemy) ; true),
-        ((alive(Enemy), alive(you)) -> hit(Enemy, you) ; true),
-        !.
+        alive(you),
+
+        hit(you, Enemy),
+        ((alive(Enemy)) -> hit(Enemy, you) ; true), !.
 
 attack(Enemy) :-
-        write('You cannot attack '), write(Enemy), write(' in this place.'), nl.
+        alive(you),
+
+        write('You cannot attack '), write(Enemy), write(' in this place.'), nl, !.
 
 hit(Attacker, Defender) :-
         defense(Defender, Strength),
@@ -168,8 +187,9 @@ flee(Direction) :-
         i_am_at(Here),
         enemy_at(Enemy, Here),
         path(Here, Direction, There),
-        !,
         value_HP(you, HP),
+        alive(you),
+
         plus(NewHP, 1, HP),
         retract(value_HP(you, HP)),
         assert(value_HP(you, NewHP)),
@@ -179,7 +199,7 @@ flee(Direction) :-
         !, look.
 
 flee(_) :-
-        write('You can\'t go that way.').
+        write('You can\'t go that way.'), !.
 
 
 /* These rules are for searching rooms. */
@@ -187,18 +207,24 @@ search :-
         i_am_at(Place),
         at(X, Place),
         room_cleared(Place),
+        alive(you),
+
         write('There is a '), write(X), write(' here.'), nl, !.
 
 search :-
         i_am_at(Place),
         enemy_at(Enemy, Place),
         alive(Enemy),
+        alive(you),
+
         write('You can\'t search the room when is '), write(Enemy), write(' there.'), nl, !.
 
 search :-
         i_am_at(Place),
         not(at(_, Place)),
-        write('There is nothing here.'), nl.
+        alive(you),
+
+        write('There is nothing here.'), nl, !.
 
 room_cleared(Place) :-
         not(enemy_at(_, Place)) ; (enemy_at(Enemy, Place), not(alive(Enemy))).
@@ -206,7 +232,8 @@ room_cleared(Place) :-
 notice_enemies_at(Place) :-
         enemy_at(Enemy, Place),
         alive(Enemy),
-        write('There is a '), write(Enemy), write(' here. Time to fight!'), nl.
+
+        write('There is a '), write(Enemy), write(' here. Time to fight!'), nl, !.
 
 notice_enemies_at(_).
 
@@ -215,31 +242,24 @@ i :- inventory.
 
 inventory :-
         holding(X),
+        alive(you),
+
         write('You have '), write(X), write(' in the inventory.'), nl.
 
 inventory :-
         not(holding(_)),
+        alive(you),
+
         write('You don\'t have anything in you inventory.'), nl.
-
-die :-
-        finish.
-
 
 /* Under UNIX, the "halt." command quits Prolog but does not
    remove the output window. On a PC, however, the window
    disappears before the final output can be seen. Hence this
    routine requests the user to perform the final "halt." */
 
-finish :-
-        nl,
-        write('The game is over. Please enter the "halt." command.'),
-        nl.
-
-
 /* This rule just writes out game instructions. */
 
 instructions :-
-        nl,
         write('Enter commands using standard Prolog syntax.'), nl,
         write('Available commands are:'), nl,
         write('start.             -- to start the game.'), nl,
