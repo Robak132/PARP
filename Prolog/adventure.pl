@@ -38,13 +38,26 @@ path(sarcophagus, e, hidden_exit).
 path(hidden_exit, n, sarcophagus).
 path(hidden_exit, s, treasure_room).
 
-enemy_at(skele_cat, attendant_room).
-
-value_HP(skele_cat, 1).
+/* Doge (player) stats */
 value_HP(you, 6).
-
-defense(skele_cat, 10).
 defense(you, 13).
+
+/* Enemies. */
+% Skeleton cat
+enemy_at(skele_cat_1, attendant_room).
+value_HP(skele_cat_1, 1).
+defense(skele_cat_1, 10).
+
+% Catmint guardian
+enemy_at(catmint_guardian, guardian).
+value_HP(catmint_guardian, 10).
+defense(catmint_guardian, 15).
+
+% Fallen cat
+enemy_at(fallen_cat, sarcophagus).
+value_HP(fallen_cat, 10).
+defense(fallen_cat, 15).
+
 
 /* These rules describe how to pick up an object. */
 
