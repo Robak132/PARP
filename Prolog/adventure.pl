@@ -153,7 +153,7 @@ open_door(moonlight_door) :-
         not(at(torch, acolyte_chamber_2)),
 
         retract(door_closed(moonlight_door)),
-        write("You unlocked the moonlight door.").
+        write("You unlocked the moonlight door."), nl.
 
 open_door(DoorName) :-
         write("The "), write(DoorName), write(" is locked."), nl, fail.
@@ -200,7 +200,7 @@ go(Direction) :-
         write('You cannot exit room, when is monster in it.'), nl, !.
 
 go(_) :-
-        write('You can''t go that way.').
+        write('You can''t go that way.'), nl.
 
 /* This rule tells how to look about you. */
 look :-
