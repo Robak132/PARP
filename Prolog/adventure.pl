@@ -4,7 +4,7 @@
 :- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, value_HP/2.
 :- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(value_HP(_, _)).
 
-i_am_at(attendant_room).
+i_am_at(entrance).
 
 /* Map of the Egyptian tomb */
 % Rooms
