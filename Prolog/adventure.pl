@@ -4,12 +4,12 @@
 :- dynamic i_am_at/1, at/2, enemy_at/2, holding/1, value_HP/2.
 :- retractall(i_am_at(_)), retractall(at(_, _)), retractall(enemy_at(_, _)), retractall(holding(_)), retractall(value_HP(_, _)).
 
-i_am_at(attendant_room).
+i_am_at(entrance).
 
 % Map of the Egyptian tomb
-path(entance, n, antechamber).
+path(entrance, n, antechamber).
 path(antechamber, n, altar_room).
-path(antechamber, s, entance).
+path(antechamber, s, entrance).
 path(antechamber, w, jar_room).
 path(antechamber, e, attendant_room).
 path(jar_room, e, antechamber).
@@ -26,17 +26,17 @@ path(altar_room, e, corridor).
 path(false_floor_room, s, corridor).
 path(false_floor_room, n, trap_corridor).
 path(trap_corridor, s, false_floor_room).
-path(trap_corridor, n, tresure_room).
+path(trap_corridor, n, treasure_room).
 path(serket_chamber, w, accolite_chamber_2).
 path(serket_chamber, n, guardian).
 path(guardian, s, serket_chamber).
 path(guardian, n, sarcophagus).
-path(tresure_room, s, trap_corridor).
-path(tresure_room, n, hidden_exit).
+path(treasure_room, s, trap_corridor).
+path(treasure_room, n, hidden_exit).
 path(sarcophagus, s, guardian).
 path(sarcophagus, e, hidden_exit).
 path(hidden_exit, n, sarcophagus).
-path(hidden_exit, s, tresure_room).
+path(hidden_exit, s, treasure_room).
 
 enemy_at(skele_cat, attendant_room).
 
@@ -45,6 +45,8 @@ value_HP(you, 6).
 
 defense(skele_cat, 10).
 defense(you, 13).
+
+/* These rules describe how to pick up an object. */
 
 take(X) :-
         holding(X),
@@ -76,6 +78,9 @@ drop(_) :-
         write('You aren''t holding it!'),
         nl.
 
+
+/* These rules define the direction letters as calls to go/1. */
+
 n :- go(n).
 
 s :- go(s).
@@ -92,7 +97,7 @@ go(Direction) :-
         path(Here, Direction, There),
         retract(i_am_at(Here)),
         assert(i_am_at(There)),
-        !.
+        !, look.
 
 go(Direction) :-
         i_am_at(Here),
@@ -185,7 +190,6 @@ notice_holding_objects() :-
 die :-
         finish.
 
-
 /* Under UNIX, the "halt." command quits Prolog but does not
    remove the output window. On a PC, however, the window
    disappears before the final output can be seen. Hence this
@@ -222,6 +226,6 @@ start :-
 
 /* These rules describe the various rooms.  Depending on circumstances, a room may have more than one description. */
 
-describe(entance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl, !.
+describe(entrance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl, !.
 describe(attendant_room) :- write('You are in simple room.'), nl, !.
 describe(_) :- write('This room is not implemented'), nl.
