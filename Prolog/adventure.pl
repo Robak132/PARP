@@ -45,14 +45,6 @@ value_HP(you, 6).
 
 defense(skele_cat, 10).
 defense(you, 13).
-% at(bowl, kitchen).
-% at(cornflakes, kitchen).
-% at(milk, kitchen).
-
-% crafting_recipe(bowl, milk, bowl_with_milk).
-% crafting_recipe(bowl_with_milk, cornflakes, monster_meal).
-% crafting_recipe(bowl, cornflakes, bowl_with_cornflakes).
-% crafting_recipe(bowl_with_cornflakes, milk, breakfast).
 
 /* These rules describe how to pick up an object. */
 
@@ -88,20 +80,6 @@ drop(_) :-
         write('You aren''t holding it!'),
         nl.
 
-% craft(X, Y) :-
-%         holding(X),
-%         holding(Y),
-%         crafting_recipe(X, Y, A),
-%         !,
-%         assert(holding(A)),
-%         retract(holding(X)),
-%         retract(holding(Y)),
-%         write('You created '), write(A),
-%         look.
-
-% craft(_, _) :-
-%         write('Something went wrong!'),
-%         nl.
 
 /* These rules define the direction letters as calls to go/1. */
 
@@ -256,4 +234,3 @@ start :-
 
 describe(entance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl.
 describe(attendant_room) :- write('You are in simple room.'), nl.
-
