@@ -358,6 +358,24 @@ start :-
 
 
 /* These rules describe the various rooms.  Depending on circumstances, a room may have more than one description. */
-describe(entrance) :- write('Stoisz w tunelu prowadzącym do grobowca, przed tobą znajdują się uchylone wrota.'), nl, !.
-describe(attendant_room) :- write('You are in simple room.'), nl, !.
+describe(entrance) :- write('You are at the entrance to tomb. There is an open gate before you, with small cat door'), nl, !.
+describe(attendant_room) :- write('You are in a room filled with sceletons. There is an attendant, with misterious key'), nl, !.
+describe(antechamber) :- write('You are in the first room. The walls are covered in hieroglyphic description of the antient curse that forbids any cat that walks in there to go to heaven. They will be forever doomed to live in the tomb, turned into Cateons.'), nl, !.
+describe(jar_room) :- write('You have entered the romm filled with jars. There are some tasty bones and shiny jewels in them'), nl, !.
+describe(corridor) :- write('You are in the dark corridor.'), nl, !.
+describe(acolyte_chamber_1) :- write('You are in yet another room. You see 12 acolytes sleeping'), nl, !.
+describe(acolyte_chamber_1) :- write('Wait there is two of them?!'), nl, !.
+describe(altar_room) :- write('You walked to the room with big altar in the middle. On the altar there is a riddle: Those who dwell here do not pass to this place.
+Pass the shadow door and say its name.'), nl, !.
+describe(false_floor_room) :- write('The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built. The floor 
+rings hollow if tapped.'), nl, !.
+describe(trap_corridor) :- write('You have entered yet another dark corridor, but this one looks scarier.'), nl, !.
+describe(serket_chamber) :- write('The hieroglyphs in this room describe how every cat devotes their life to lasagna, and therefore is cursed dou to its greed'), nl, !.
+describe(guardian) :- write('You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole'), nl, !.
+describe(treasure_room) :- write('There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff'), nl, !.
+describe(sarcophagus) :- write('There is a big sarcophagus in the middle of the room'), nl, !.
+describe(hidden_exit) :- write('There are two statues of cats in this room. Under one 
+of them a small breeze can be felt. '), nl, !.
+
+
 describe(_) :- write('This room is not implemented'), nl.
