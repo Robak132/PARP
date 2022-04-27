@@ -88,6 +88,7 @@ at(key, attendant_room).
 % Torch that needs to be carried out to open the door between acolyte_chamber_1 and acolyte_chamber_2, hanging in acolyte_chamber_1
 at(torch, acolyte_chamber_1).
 
+at(floating_crystal, false_floor_room).
 
 /* These rules describe how to pick up an object. */
 
@@ -97,6 +98,11 @@ take(X) :-
 
         write('You''re already holding it!'),
         !, nl.
+
+take(floating_crystal) :-
+        write('You tried to grab the crystal, but floor collapsed under you. You fall into spikes.'), nl,
+        harm(you, 100),
+        !.
 
 take(X) :-
         i_am_at(Place),
@@ -269,7 +275,7 @@ harm(Character, Damage) :-
         plus(NewHP, Damage, HP),
         retract(health(Character, HP)),
         assert(health(Character, NewHP)),
-        (NewHP =< 0 -> write(Character), write(' died.'), nl ; write('Remaining HP: '), write(NewHP), nl).
+        (NewHP =< 0 -> write(Character), write(' died.'), nl ; write('Remaining HP: '), write(NewHP), nl), !.
 
 flee(Direction) :-
         i_am_at(Here),
@@ -318,10 +324,10 @@ room_cleared(Place) :-
 i :- inventory.
 
 inventory :-
-        holding(X),
         alive(you),
+        findall(X, holding(X), Items),
 
-        write('You have '), write(X), write(' in the inventory.'), nl.
+        write('You have '), write(Items), write(' in the inventory.'), nl, !.
 
 inventory :-
         not(holding(_)),
