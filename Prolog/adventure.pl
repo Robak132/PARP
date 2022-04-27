@@ -351,11 +351,10 @@ instructions :-
         write('drop(Object).      -- to put down an object.'), nl,
         write('look.              -- to look around you again.'), nl,
         write('search.            -- to search the room.'), nl,
+        write('inventory., i.     -- to check inventory.'), nl,
         write('attack(Enemy).     -- to attack the enemy.'), nl,
         write('instructions.      -- to see this message again.'), nl,
-        write('halt.              -- to end the game and quit.'), nl,
-        nl.
-
+        write('halt.              -- to end the game and quit.'), nl.
 
 /* This rule prints out instructions and tells where you are. */
 start :-
