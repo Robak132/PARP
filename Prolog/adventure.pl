@@ -235,7 +235,7 @@ notice_enemies_at(_).
 alive(you) :-
         health(you, HP),
         HP =< 0,
-        write('You are dead. Please enter the "halt." command1.'), fail, !.
+        write('You are dead. Please enter the "halt." command.'), fail, !.
 
 alive(Enemy) :-
         health(Enemy, EnemyHP),
@@ -377,6 +377,8 @@ describe(serket_chamber) :- write('The hieroglyphs in this room describe how eve
 describe(guardian) :- write('You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole'), nl, !.
 describe(treasure_room) :- write('There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff'), nl, !.
 describe(sarcophagus) :- write('There is a big sarcophagus in the middle of the room'), nl, !.
-describe(hidden_exit) :- write('There are two statues of cats in this room. Under one of them a small breeze can be felt. '), nl, !.
+describe(hidden_exit) :- 
+        write('There are two statues of cats in this room. Under one of them a small breeze can be felt.'), nl,
+        write('You made it to the end, please enter the "halt." command.'), nl, !.
 
 describe(_) :- write('This room is not implemented'), nl.
