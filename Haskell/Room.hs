@@ -45,7 +45,35 @@ module Room where
         RoomConnection "hidden_exit" S "treasure_room"
         ]
 
+    data RoomDescription = RoomDescription {
+        name :: String,
+        description :: [String]
+        } deriving (Show)
+
+    descriptions = [
+        RoomDescription "entrance" ["You are at the entrance to tomb. There is an gate before you, with small cat door"],
+        RoomDescription "attendant_room" ["You are in a room filled with sceletons."],
+        RoomDescription "antechamber" ["You are in the first room. The walls are covered in hieroglyphic description of the antient curse that forbids any cat that walks in there to go to heaven. They will be forever doomed to live in the tomb, turned into skeletons."],
+        RoomDescription "jar_room" ["You have entered the romm filled with jars. There are some tasty bones and shiny jewels in them"],
+        RoomDescription "corridor" ["You are in the dark corridor."],
+        RoomDescription "acolyte_chamber_1" ["You are in yet another room. You see door with a symbol of the moon and long shadows."],
+        RoomDescription "acolyte_chamber_2" ["You see tombs of important cats. Unfortunately cats can\'t write, so you don\'t know their names."],
+        RoomDescription "altar_room" ["You walked to the room with big altar in the middle."],
+        RoomDescription "false_floor_room" ["The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built."],
+        RoomDescription "trap_corridor" ["You have entered yet another dark corridor, but this one looks scarier."],
+        RoomDescription "serket_chamber" ["The hieroglyphs in this room describe how every cat devotes their life to lasagna, and therefore is cursed dou to its greed"],
+        RoomDescription "guardian" ["You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole"],
+        RoomDescription "treasure_room" ["There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff"],
+        RoomDescription "sarcophagus" ["There is a big sarcophagus in the middle of the room"],
+        RoomDescription "hidden_exit" ["There are two statues of cats in this room. Under one of them a small breeze can be felt.", "You made it to the end, please enter the 'quit' command."]
+        ]
+
     go direction state = do
         case (List.find (\(x) -> from x == i_am_at state && by x == direction) connections) of
-            Nothing -> state
-            Just(room) -> state { i_am_at = to room, comment = [to room] }
+            Nothing -> state { comment = ["There is no way there."]}
+            Just(room) -> look(state {i_am_at = to room})
+
+    look state = do
+        case (List.find (\x-> name x == i_am_at state) descriptions) of
+            Nothing -> state { comment = ["There is nothing here, probably an error"]}
+            Just(desc) -> state { comment = description desc }

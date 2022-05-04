@@ -11,22 +11,23 @@ introductionText = [
 
 instructionsText = [
     "Available commands are:",
-    "n.  s.  e.  w.    -- to go in that direction.",
-    "flee Direction    -- to flee from combat.",
-    "take Object.      -- to pick up an object.",
-    "drop Object       -- to put down an object.",
-    "look              -- to look around you again.",
-    "search            -- to search the room.",
-    "inventory, i      -- to check inventory.",
-    "attack Enemy      -- to attack the enemy.",
-    "instructions      -- to see this message again.",
-    "quit              -- to end the game and quit."
+    "n.  s.  e.  w.     -- to go in that direction.",
+    "flee Direction     -- to flee from combat.",
+    "take Object.       -- to pick up an object.",
+    "drop Object        -- to put down an object.",
+    "look               -- to look around you again.",
+    "search             -- to search the room.",
+    "inventory, i       -- to check inventory.",
+    "attack Enemy       -- to attack the enemy.",
+    "instructions, help -- to see this message again.",
+    "quit               -- to end the game and quit.",
+    ""
     ]
 
 beginningState = State
 -- Comment
     [
-
+        "First"
     ]
 -- My location
     "entrance"
@@ -67,8 +68,7 @@ help state = state { comment = instructionsText }
 gameLoop :: State -> IO State
 gameLoop state = do
     printState state
-    let modifiedState = state {comment = []}
-    printLines ["\nWaiting for command:"]
+    let modifiedState = state
     cmd <- readCommand
     if not (cmd == "quit") then
         gameLoop (case cmd of
@@ -78,17 +78,20 @@ gameLoop state = do
             -- "attack Enemy"
             -- "inventory" -> help modifiedState
             -- "search" -> help modifiedState
-            -- "look" -> help modifiedState
+            "look" -> look modifiedState
             "instructions" -> help modifiedState
+            "help" -> help modifiedState
             "n" -> go N modifiedState
             "s" -> go S modifiedState
             "e" -> go E modifiedState
             "w" -> go W modifiedState
+            _ -> modifiedState { comment = ["Wait, that illegal. You used wrong command."]}
+
         )
     else do return(modifiedState)
 
 main :: IO State
 main = do
-    printLines introductionText
+    -- printLines introductionText
     printLines instructionsText
-    gameLoop beginningState
+    gameLoop(look(beginningState))
