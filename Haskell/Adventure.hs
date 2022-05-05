@@ -6,24 +6,24 @@ import State ( State(State, comment, holding), printState )
 import Room ( Direction(W, E, S, N), go, look, search)
 import Utilites ( printLines, readCommand, split )
 
-introductionText :: [[Char]]
+introductionText :: [String]
 introductionText = [
     "Placeholder introduction"
     ]
 
-instructionsText :: [[Char]]
+instructionsText :: [String]
 instructionsText = [
     "Available commands are:",
-    "n.  s.  e.  w.     -- to go in that direction.",
-    "flee Direction     -- to flee from combat.",
-    "take Object.       -- to pick up an object.",
-    "drop Object        -- to put down an object.",
-    "look               -- to look around you again.",
-    "search             -- to search the room.",
-    "inventory, i       -- to check inventory.",
-    "attack Enemy       -- to attack the enemy.",
-    "instructions, help -- to see this message again.",
-    "quit               -- to end the game and quit.",
+    "n,  s,  e,  w,                 -- to go in that direction.",
+    "flee n, flee s, flee e, flee w -- to flee from combat.",
+    "take Object.                   -- to pick up an object.",
+    "drop Object                    -- to put down an object.",
+    "look                           -- to look around you again.",
+    "search                         -- to search the room.",
+    "inventory, i                   -- to check inventory.",
+    "attack Enemy                   -- to attack the enemy.",
+    "instructions, help             -- to see this message again.",
+    "quit                           -- to end the game and quit.",
     ""
     ]
 
@@ -31,7 +31,6 @@ beginningState :: State
 beginningState = State
 -- Comment
     [
-        "First"
     ]
 -- My location
     "entrance"
