@@ -1,14 +1,16 @@
 -- Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka
 
 import Prelude
-import State
-import Room
-import Utilites
+import State ( State(State, comment) )
+import Room ( Direction(W, E, S, N), go, look )
+import Utilites ( printLines, readCommand )
 
+introductionText :: [[Char]]
 introductionText = [
     "Placeholder introduction"
     ]
 
+instructionsText :: [[Char]]
 instructionsText = [
     "Available commands are:",
     "n.  s.  e.  w.     -- to go in that direction.",
@@ -24,6 +26,7 @@ instructionsText = [
     ""
     ]
 
+beginningState :: State
 beginningState = State
 -- Comment
     [
@@ -70,7 +73,7 @@ gameLoop state = do
     printState state
     let modifiedState = state
     cmd <- readCommand
-    if not (cmd == "quit") then
+    if cmd /= "quit" then
         gameLoop (case cmd of
             -- "flee Direction"
             -- "take Object"
@@ -86,12 +89,11 @@ gameLoop state = do
             "e" -> go E modifiedState
             "w" -> go W modifiedState
             _ -> modifiedState { comment = ["Wait, that illegal. You used wrong command."]}
-
         )
-    else do return(modifiedState)
+    else do return modifiedState
 
 main :: IO State
 main = do
     -- printLines introductionText
     printLines instructionsText
-    gameLoop(look(beginningState))
+    gameLoop(look beginningState)

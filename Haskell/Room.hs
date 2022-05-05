@@ -1,7 +1,6 @@
 module Room where
     import qualified Data.List as List
-    import State
-    import Utilites
+    import State ( State(comment, i_am_at) )
 
     data Direction = N | W | E | S deriving (Read, Show, Enum, Eq)
 
@@ -10,8 +9,9 @@ module Room where
         by :: Direction,
         to :: String
         } deriving (Show)
-    
-    connections = [        
+
+    connections :: [RoomConnection]
+    connections = [
         RoomConnection "entrance" N "antechamber",
         RoomConnection "antechamber" N "altar_room",
         RoomConnection "antechamber" S "entrance",
@@ -50,6 +50,7 @@ module Room where
         description :: [String]
         } deriving (Show)
 
+    descriptions :: [RoomDescription]
     descriptions = [
         RoomDescription "entrance" ["You are at the entrance to tomb. There is an gate before you, with small cat door"],
         RoomDescription "attendant_room" ["You are in a room filled with sceletons."],
@@ -68,12 +69,14 @@ module Room where
         RoomDescription "hidden_exit" ["There are two statues of cats in this room. Under one of them a small breeze can be felt.", "You made it to the end, please enter the 'quit' command."]
         ]
 
+    go :: Direction -> State -> State
     go direction state = do
-        case (List.find (\(x) -> from x == i_am_at state && by x == direction) connections) of
+        case List.find (\x -> from x == i_am_at state && by x == direction) connections of
             Nothing -> state { comment = ["There is no way there."]}
-            Just(room) -> look(state {i_am_at = to room})
+            Just room -> look(state {i_am_at = to room})
 
+    look :: State -> State
     look state = do
-        case (List.find (\x-> name x == i_am_at state) descriptions) of
+        case List.find (\x-> name x == i_am_at state) descriptions of
             Nothing -> state { comment = ["There is nothing here, probably an error"]}
-            Just(desc) -> state { comment = description desc }
+            Just desc -> state { comment = description desc }

@@ -3,6 +3,4 @@ module Utilites where
     printLines xs = putStr (unlines xs)
 
     readCommand :: IO String
-    readCommand = do
-        xs <- getLine
-        return xs
+    readCommand = do getLine
