@@ -1,9 +1,10 @@
 -- Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka
-
-import Prelude
-import State ( State(State, comment) )
-import Room ( Direction(W, E, S, N), go, look )
-import Utilites ( printLines, readCommand )
+import Prelude hiding (take, drop)
+import Data.List (isPrefixOf)
+import Items ( take, drop, inventory )
+import State ( State(State, comment, holding), printState )
+import Room ( Direction(W, E, S, N), go, look, search)
+import Utilites ( printLines, readCommand, split )
 
 introductionText :: [[Char]]
 introductionText = [
@@ -59,13 +60,9 @@ beginningState = State
     ]
 -- Holding
     [
-
     ]
 
-printState :: State -> IO ()
-printState state = do
-    putStr (unlines (comment state))
-
+help :: State -> State
 help state = state { comment = instructionsText }
 
 gameLoop :: State -> IO State
@@ -76,19 +73,23 @@ gameLoop state = do
     if cmd /= "quit" then
         gameLoop (case cmd of
             -- "flee Direction"
-            -- "take Object"
-            -- "drop Object"
             -- "attack Enemy"
-            -- "inventory" -> help modifiedState
-            -- "search" -> help modifiedState
-            "look" -> look modifiedState
+            "inventory" -> inventory modifiedState
+            "i" -> inventory modifiedState
+
             "instructions" -> help modifiedState
             "help" -> help modifiedState
+
+            "look" -> look modifiedState
+            "search" -> search modifiedState
+
             "n" -> go N modifiedState
             "s" -> go S modifiedState
             "e" -> go E modifiedState
             "w" -> go W modifiedState
-            _ -> modifiedState { comment = ["Wait, that illegal. You used wrong command."]}
+            _ -> if "take" `isPrefixOf` cmd then take (split cmd!!1) modifiedState
+                else if "drop" `isPrefixOf` cmd then drop (split cmd!!1) modifiedState
+                else modifiedState { comment = ["Wait, that illegal. You used wrong command."]}
         )
     else do return modifiedState
 

@@ -1,6 +1,6 @@
 module Room where
     import qualified Data.List as List
-    import State ( State(comment, i_am_at) )
+    import State ( State(comment, i_am_at, items_at) )
 
     data Direction = N | W | E | S deriving (Read, Show, Enum, Eq)
 
@@ -78,5 +78,11 @@ module Room where
     look :: State -> State
     look state = do
         case List.find (\x-> name x == i_am_at state) descriptions of
-            Nothing -> state { comment = ["There is nothing here, probably an error"]}
+            Nothing -> state { comment = ["There is nothing here, probably an error."]}
             Just desc -> state { comment = description desc }
+
+    search :: State -> State
+    search state = do 
+        case map fst (filter (\x -> snd x == i_am_at state) (items_at state)) of
+            [] -> state { comment = ["There is nothing here"]}
+            items -> state { comment = "You found these items:" : items }
