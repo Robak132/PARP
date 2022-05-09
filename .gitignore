@@ -3,4 +3,5 @@
 # Haskell
 Haskell/*
 !Haskell/*.hs
+!Haskell/*.sh
 !Haskell/*.pdf

@@ -4,13 +4,11 @@ module Items where
 
     take :: String -> State -> State
     take itemName state = do
-        let item = List.find (\x -> itemName == fst x) (items_at state)
-        case item of
+        let itemTuple = List.find (\x -> itemName == fst x && i_am_at state == snd x) (items_at state)
+        case itemTuple of
             Nothing -> state { comment = ["There is no " ++ itemName ++ " in this room"] }
-            Just realThing -> if snd realThing == i_am_at state then
-                  state { holding = itemName:holding state, items_at = List.delete realThing (items_at state), comment = ["You took " ++ itemName ++ " from the ground"]  }
-              else
-                  state { comment = ["There is no " ++ itemName ++ " in this room"] }
+            Just ("Floating Crystal", _) -> state { comment = ["You tried to grab the crystal, but floor collapsed under you. You fall into spikes."] }
+            Just itemTuple -> state { holding = itemName:holding state, items_at = List.delete itemTuple (items_at state), comment = ["You took " ++ itemName ++ " from the ground"]  }
 
     drop :: String -> State -> State
     drop itemName state = do

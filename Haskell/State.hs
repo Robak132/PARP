@@ -13,8 +13,8 @@ module State where
     printState :: State -> IO ()
     printState state = printLines(comment state)
 
-    beginningState :: State
-    beginningState = State
+    initialState :: State
+    initialState = State
     -- Comment
         [
         ]
@@ -22,8 +22,9 @@ module State where
         "entrance"
     -- Items
         [
-            ("key", "attendant_room"),
-            ("torch", "acolyte_chamber_1")
+            ("Key", "attendant_room"),
+            ("Torch", "acolyte_chamber_1"),
+            ("Floating Crystal", "false_floor_room")
         ]
     -- Enemies
         [

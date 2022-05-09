@@ -2,7 +2,7 @@
 import Prelude hiding (take, drop)
 import Data.List (isPrefixOf)
 import Items ( take, drop, inventory )
-import State ( State(State, comment, holding), printState, beginningState)
+import State ( State(State, comment, holding), printState, initialState)
 import Room ( Direction(W, E, S, N), go, look, search)
 import Utilites ( printLines, readCommand, split )
 
@@ -62,4 +62,4 @@ main :: IO State
 main = do
     -- printLines introductionText
     printLines instructionsText
-    gameLoop(look beginningState)
+    gameLoop(look initialState)
