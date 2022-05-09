@@ -11,3 +11,6 @@ module Utilites where
             "" -> []
             s' -> w : split s''
                 where (w, s'') = break (==' ') s'
+
+    splitCommand :: String -> String
+    splitCommand cmd = unwords (tail(split cmd))

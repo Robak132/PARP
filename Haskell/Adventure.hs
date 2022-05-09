@@ -4,7 +4,7 @@ import Data.List (isPrefixOf)
 import Items ( take, drop, inventory )
 import State ( State(State, comment, holding), printState, initialState)
 import Room (go, look, search)
-import Utilites ( printLines, readCommand, split )
+import Utilites ( printLines, readCommand, split, splitCommand )
 import System.Process ( system )
 import Combat ( attack )
 
@@ -35,32 +35,31 @@ help state = state { comment = instructionsText }
 gameLoop :: State -> IO State
 gameLoop state = do
     printState state
-    let modifiedState = state
     cmd <- readCommand
     system "clear"
     if cmd /= "quit" then
         gameLoop (case cmd of
             -- "flee Direction"
             -- "attack Enemy"
-            "inventory" -> inventory modifiedState
-            "i" -> inventory modifiedState
+            "inventory" -> inventory state
+            "i" -> inventory state
 
-            "instructions" -> help modifiedState
-            "help" -> help modifiedState
+            "instructions" -> help state
+            "help" -> help state
 
-            "look" -> look modifiedState
-            "search" -> search modifiedState
+            "look" -> look state
+            "search" -> search state
 
-            "n" -> go "N" modifiedState
-            "s" -> go "S" modifiedState
-            "e" -> go "E" modifiedState
-            "w" -> go "W" modifiedState
-            _ -> if "take" `isPrefixOf` cmd then take (split cmd!!1) modifiedState
-                else if "drop" `isPrefixOf` cmd then drop (split cmd!!1) modifiedState
-                else if "attack" `isPrefixOf` cmd then attack (split cmd!!1) modifiedState
-                else modifiedState { comment = ["Wait, that illegal. You used wrong command."]}
+            "n" -> go "N" state
+            "s" -> go "S" state
+            "e" -> go "E" state
+            "w" -> go "W" state
+            _ -> if "take" `isPrefixOf` cmd then take (splitCommand cmd) state
+                else if "drop" `isPrefixOf` cmd then drop (splitCommand cmd) state
+                else if "attack" `isPrefixOf` cmd then attack (splitCommand cmd) state
+                else state { comment = ["Wait, that illegal. You used wrong command."]}
         )
-    else do return modifiedState
+    else do return state
 
 main :: IO State
 main = do
