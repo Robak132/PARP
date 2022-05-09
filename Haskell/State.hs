@@ -28,7 +28,7 @@ module State where
         ]
     -- Enemies
         [
-            basicSkeleton {name = "Skale-cat",        location = "attendant_room"},
+            basicSkeleton {name = "Skele-cat",        location = "attendant_room"},
             basicGuardian {name = "Catmint Guardian", location = "guardian"},
             fallenCat     {name = "Fallen Cat",       location = "sarcophagus"}
         ]

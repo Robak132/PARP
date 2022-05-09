@@ -4,15 +4,13 @@ module Items where
     import qualified Data.List as List
     
     take :: String -> State -> State
-    take itemName state = do
-        case List.find (\x -> itemName == fst x && location (you state) == snd x) (items_at state) of
-            Nothing -> state { comment = ["There is no " ++ itemName ++ " in this room"] }
-            Just ("Floating Crystal", _) -> state { comment = ["You tried to grab the crystal, but floor collapsed under you. You fall into spikes."] }
-            Just itemTuple -> state { holding = itemName:holding state, items_at = List.delete itemTuple (items_at state), comment = ["You took " ++ itemName ++ " from the ground"]  }
+    take itemName state = case List.find (\x -> itemName == fst x && location (you state) == snd x) (items_at state) of
+        Nothing -> state { comment = ["There is no " ++ itemName ++ " in this room"] }
+        Just ("Floating Crystal", _) -> state { comment = ["You tried to grab the crystal, but floor collapsed under you. You fall into spikes."] }
+        Just itemTuple -> state { holding = itemName:holding state, items_at = List.delete itemTuple (items_at state), comment = ["You took " ++ itemName ++ " from the ground"]  }
 
     drop :: String -> State -> State
-    drop itemName state = do
-        if itemName `elem` holding state then
+    drop itemName state = if itemName `elem` holding state then
             state { holding = List.delete itemName (holding state), items_at = (itemName, location (you state)):items_at state, comment = ["You drop " ++ itemName ++ " to ground"]  }
         else
             state { comment = ["You don't have " ++ itemName ++ " in your inventory"] }

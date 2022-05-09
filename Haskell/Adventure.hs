@@ -4,7 +4,7 @@ import Data.List (isPrefixOf)
 import Items ( take, drop, inventory )
 import State ( State(State, comment, holding), printState, initialState)
 import Room (go, look, search, flee)
-import Utilites ( printLines, readCommand, split, splitCommand )
+import Utilites ( printLines, split, splitCommand )
 import System.Process ( system )
 import Combat ( attack )
 
@@ -30,7 +30,7 @@ help state = state { comment = instructionsText }
 gameLoop :: State -> IO State
 gameLoop state = do
     printState state
-    cmd <- readCommand
+    cmd <- getLine
     system "clear"
     if cmd /= "quit" then
         gameLoop (case cmd of
@@ -52,12 +52,12 @@ gameLoop state = do
             "s" -> go "S" state
             "e" -> go "E" state
             "w" -> go "W" state
-            _ -> if "take" `isPrefixOf` cmd then take (splitCommand cmd) state
-                else if "drop" `isPrefixOf` cmd then drop (splitCommand cmd) state
-                else if "attack" `isPrefixOf` cmd then attack (splitCommand cmd) state
-                else state { comment = ["Wait, that illegal. You used wrong command."]}
+            _ | "take" `isPrefixOf` cmd -> take (splitCommand cmd) state
+                | "drop" `isPrefixOf` cmd -> drop (splitCommand cmd) state
+                | "attack" `isPrefixOf` cmd -> attack (splitCommand cmd) state
+                | otherwise -> state{comment = ["Wait, that illegal. You used wrong command."]}
         )
-    else do return state
+    else return state
 
 main :: IO State
 main = do
