@@ -1,11 +1,11 @@
 module State where
     import Utilites ( printLines )
+    import Character (Character (Character, location, name), basicSkeleton, basicGuardian, fallenCat)
     data State = State {
             comment :: [String],
             i_am_at :: String,
             items_at :: [(String, String)],
-            enemy_at :: [(String, String)],
-            health :: [(String, Integer)],
+            enemies :: [Character],
             door :: [(String, String, String, Bool)],
             holding :: [String]
         } deriving (Show)
@@ -28,16 +28,9 @@ module State where
         ]
     -- Enemies
         [
-            ("Skele-cat", "attendant_room"),
-            ("catmint_guardian", "guardian"),
-            ("fallen_cat", "sarcophagus")
-        ]
-    -- Health
-        [
-            ("player", 6),
-            ("skele_cat_1", 3),
-            ("catmint_guardian", 13),
-            ("fallen_cat", 6)
+            basicSkeleton {name = "Skale-cat",        location = "attendant_room"},
+            basicGuardian {name = "Catmint Guardian", location = "guardian"},
+            fallenCat     {name = "Fallen Cat",       location = "sarcophagus"}
         ]
     -- Doors
         [
