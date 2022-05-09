@@ -3,8 +3,9 @@ import Prelude hiding (take, drop)
 import Data.List (isPrefixOf)
 import Items ( take, drop, inventory )
 import State ( State(State, comment, holding), printState, initialState)
-import Room ( Direction(W, E, S, N), go, look, search)
+import Room (go, look, search)
 import Utilites ( printLines, readCommand, split )
+import System.Process ( system )
 
 introductionText :: [String]
 introductionText = [
@@ -35,6 +36,7 @@ gameLoop state = do
     printState state
     let modifiedState = state
     cmd <- readCommand
+    system "clear"
     if cmd /= "quit" then
         gameLoop (case cmd of
             -- "flee Direction"
@@ -48,10 +50,10 @@ gameLoop state = do
             "look" -> look modifiedState
             "search" -> search modifiedState
 
-            "n" -> go N modifiedState
-            "s" -> go S modifiedState
-            "e" -> go E modifiedState
-            "w" -> go W modifiedState
+            "n" -> go "N" modifiedState
+            "s" -> go "S" modifiedState
+            "e" -> go "E" modifiedState
+            "w" -> go "W" modifiedState
             _ -> if "take" `isPrefixOf` cmd then take (split cmd!!1) modifiedState
                 else if "drop" `isPrefixOf` cmd then drop (split cmd!!1) modifiedState
                 else modifiedState { comment = ["Wait, that illegal. You used wrong command."]}
