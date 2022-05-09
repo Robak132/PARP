@@ -3,15 +3,10 @@ import Prelude hiding (take, drop)
 import Data.List (isPrefixOf)
 import Items ( take, drop, inventory )
 import State ( State(State, comment, holding), printState, initialState)
-import Room (go, look, search)
+import Room (go, look, search, flee)
 import Utilites ( printLines, readCommand, split, splitCommand )
 import System.Process ( system )
 import Combat ( attack )
-
-introductionText :: [String]
-introductionText = [
-    "Placeholder introduction"
-    ]
 
 instructionsText :: [String]
 instructionsText = [
@@ -39,8 +34,6 @@ gameLoop state = do
     system "clear"
     if cmd /= "quit" then
         gameLoop (case cmd of
-            -- "flee Direction"
-            -- "attack Enemy"
             "inventory" -> inventory state
             "i" -> inventory state
 
@@ -49,6 +42,11 @@ gameLoop state = do
 
             "look" -> look state
             "search" -> search state
+
+            "flee n" -> flee "N" state
+            "flee s" -> flee "S" state
+            "flee e" -> flee "E" state
+            "flee w" -> flee "W" state
 
             "n" -> go "N" state
             "s" -> go "S" state

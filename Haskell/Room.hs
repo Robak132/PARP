@@ -76,6 +76,15 @@ module Room where
                     Nothing -> look(state {i_am_at = to room})
                     Just _ -> state { comment = ["You cannot exit room, when is monster in it."]}
 
+    flee :: String -> State -> State
+    flee direction state = do
+        case List.find (\x -> from x == i_am_at state && by x == direction) connections of
+            Nothing -> state { comment = ["There is no way there."]}
+            Just room -> do
+                case List.find (\x -> i_am_at state == snd x) (enemy_at state) of
+                    Nothing -> look(state {i_am_at = to room})
+                    Just _ -> look(state {i_am_at = to room})
+
     look :: State -> State
     look state = do
         case List.find (\x-> name x == i_am_at state) descriptions of
