@@ -28,7 +28,7 @@ module State where
         ]
     -- Enemies
         [
-            ("skele_cat_1", "attendant_room"),
+            ("Skele-cat", "attendant_room"),
             ("catmint_guardian", "guardian"),
             ("fallen_cat", "sarcophagus")
         ]

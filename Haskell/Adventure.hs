@@ -6,6 +6,7 @@ import State ( State(State, comment, holding), printState, initialState)
 import Room (go, look, search)
 import Utilites ( printLines, readCommand, split )
 import System.Process ( system )
+import Combat ( attack )
 
 introductionText :: [String]
 introductionText = [
@@ -56,6 +57,7 @@ gameLoop state = do
             "w" -> go "W" modifiedState
             _ -> if "take" `isPrefixOf` cmd then take (split cmd!!1) modifiedState
                 else if "drop" `isPrefixOf` cmd then drop (split cmd!!1) modifiedState
+                else if "attack" `isPrefixOf` cmd then attack (split cmd!!1) modifiedState
                 else modifiedState { comment = ["Wait, that illegal. You used wrong command."]}
         )
     else do return modifiedState

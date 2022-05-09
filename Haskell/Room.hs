@@ -1,6 +1,6 @@
 module Room where
     import qualified Data.List as List
-    import State ( State(comment, i_am_at, items_at) )
+    import State ( State(comment, i_am_at, items_at, enemy_at) )
 
     data RoomConnection = RoomConnection {
         from :: String,
@@ -71,7 +71,10 @@ module Room where
     go direction state = do
         case List.find (\x -> from x == i_am_at state && by x == direction) connections of
             Nothing -> state { comment = ["There is no way there."]}
-            Just room -> look(state {i_am_at = to room})
+            Just room -> do
+                case List.find (\x -> i_am_at state == snd x) (enemy_at state) of
+                    Nothing -> look(state {i_am_at = to room})
+                    Just _ -> state { comment = ["You cannot exit room, when is monster in it."]}
 
     look :: State -> State
     look state = do
@@ -82,8 +85,14 @@ module Room where
     findExits :: State -> State
     findExits state = do
         case map by (filter (\x -> from x == i_am_at state) connections) of
-            [] -> state
-            directions -> state { comment = comment state ++ ["You may go from here to: " ++ List.intercalate ", " directions] }
+            [] -> findEnemies state
+            directions -> findEnemies state { comment = comment state ++ ["You may go from here to: " ++ List.intercalate ", " directions] }
+
+    findEnemies :: State -> State
+    findEnemies state = do
+        case List.find (\x -> i_am_at state == snd x) (enemy_at state) of
+            Nothing -> state
+            Just enemyTuple -> state { comment = comment state ++ ["There is " ++ fst enemyTuple ++ " here. Time to fight!"] }
 
     search :: State -> State
     search state = do 
