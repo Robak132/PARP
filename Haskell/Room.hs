@@ -1,6 +1,6 @@
 module Room where
     import qualified Data.List as List
-    import State (State(comment, i_am_at, items_at, enemies))
+    import State (State(comment, you, items_at, enemies))
     import Character (Character(name, location))
     
     data RoomConnection = RoomConnection {
@@ -70,42 +70,39 @@ module Room where
 
     go :: String -> State -> State
     go direction state = do
-        case List.find (\x -> from x == i_am_at state && by x == direction) connections of
+        case List.find (\x -> from x == location (you state) && by x == direction) connections of
             Nothing -> state { comment = ["There is no way there."]}
             Just room -> do
-                case List.find (\x -> i_am_at state == location x) (enemies state) of
-                    Nothing -> look(state {i_am_at = to room})
+                case List.find (\x -> location (you state) == location x) (enemies state) of
+                    Nothing -> look(state {you = (you state) {location = to room}})
                     Just _ -> state { comment = ["You cannot exit room, when is monster in it."]}
 
     flee :: String -> State -> State
     flee direction state = do
-        case List.find (\x -> from x == i_am_at state && by x == direction) connections of
+        case List.find (\x -> from x == location (you state) && by x == direction) connections of
             Nothing -> state { comment = ["There is no way there."]}
-            Just room -> do
-                case List.find (\x -> i_am_at state == location x) (enemies state) of
-                    Nothing -> look(state {i_am_at = to room})
-                    Just _ -> look(state {i_am_at = to room})
+            Just room -> look(state {you = (you state) {location = to room} })
 
     look :: State -> State
     look state = do
-        case List.find (\x-> Room.name x == i_am_at state) descriptions of
+        case List.find (\x-> Room.name x == location (you state)) descriptions of
             Nothing -> findExits state { comment = ["There is nothing here, probably an error."]}
             Just desc -> findExits state { comment = description desc }
 
     findExits :: State -> State
     findExits state = do
-        case map by (filter (\x -> from x == i_am_at state) connections) of
+        case map by (filter (\x -> from x == location (you state)) connections) of
             [] -> findEnemies state
             directions -> findEnemies state { comment = comment state ++ ["You may go from here to: " ++ List.intercalate ", " directions] }
 
     findEnemies :: State -> State
     findEnemies state = do
-        case List.find (\x -> i_am_at state == location x) (enemies state) of
+        case List.find (\x -> location (you state) == location x) (enemies state) of
             Nothing -> state
             Just enemy -> state { comment = comment state ++ ["There is " ++ Character.name enemy ++ " here. Time to fight!"] }
 
     search :: State -> State
     search state = do 
-        case map fst (filter (\x -> snd x == i_am_at state) (items_at state)) of
+        case map fst (filter (\x -> snd x == location (you state)) (items_at state)) of
             [] -> state { comment = ["There is nothing here"]}
             items -> state { comment = "You found these items:" : items }

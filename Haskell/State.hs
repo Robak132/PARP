@@ -1,9 +1,9 @@
 module State where
     import Utilites ( printLines )
-    import Character (Character (Character, location, name), basicSkeleton, basicGuardian, fallenCat)
+    import Character (Character (Character, location, name), basicSkeleton, basicGuardian, fallenCat, character)
     data State = State {
             comment :: [String],
-            i_am_at :: String,
+            you :: Character,
             items_at :: [(String, String)],
             enemies :: [Character],
             door :: [(String, String, String, Bool)],
@@ -18,8 +18,8 @@ module State where
     -- Comment
         [
         ]
-    -- My location
-        "entrance"
+    -- You
+        character {location = "entrance"}
     -- Items
         [
             ("Key", "attendant_room"),
