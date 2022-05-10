@@ -1,7 +1,7 @@
 module Room where
     import qualified Data.List as List
     import State (State(comment, you, items_at, enemies))
-    import Character (Character(name, location))
+    import Character (Character(name, location), alive)
     
     data RoomConnection = RoomConnection {
         from :: String,
@@ -52,7 +52,7 @@ module Room where
     descriptions :: [RoomDescription]
     descriptions = [
         RoomDescription "entrance" ["You are at the entrance to tomb. There is an gate before you, with small cat door"],
-        RoomDescription "attendant_room" ["You are in a room filled with sceletons."],
+        RoomDescription "attendant_room" ["You are in a room filled with skeletons."],
         RoomDescription "antechamber" ["You are in the first room. The walls are covered in hieroglyphic description of the antient curse that forbids any cat that walks in there to go to heaven. They will be forever doomed to live in the tomb, turned into skeletons."],
         RoomDescription "jar_room" ["You have entered the romm filled with jars. There are some tasty bones and shiny jewels in them"],
         RoomDescription "corridor" ["You are in the dark corridor."],
@@ -73,7 +73,10 @@ module Room where
         Nothing -> state { comment = ["There is no way there."]}
         Just room -> case List.find (\x -> location (you state) == location x) (enemies state) of
             Nothing -> look(state {you = (you state) {location = to room}})
-            Just _ -> state { comment = ["You cannot exit room, when is monster in it."]}
+            Just enemy -> if alive enemy then 
+                    state { comment = ["You cannot exit room, when is monster in it."]}
+                else
+                    look(state {you = (you state) {location = to room}})
 
     flee :: String -> State -> State
     flee direction state = case List.find (\x -> from x == location (you state) && by x == direction) connections of
@@ -93,7 +96,11 @@ module Room where
     findEnemies :: State -> State
     findEnemies state = case List.find (\x -> location (you state) == location x) (enemies state) of
         Nothing -> state
-        Just enemy -> state { comment = comment state ++ ["There is " ++ Character.name enemy ++ " here. Time to fight!"] }
+        Just enemy -> 
+            if alive enemy then
+                state { comment = comment state ++ ["There is " ++ Character.name enemy ++ " here. Time to fight!"] }
+            else
+                state
 
     search :: State -> State
     search state = case map fst (filter (\x -> snd x == location (you state)) (items_at state)) of
