@@ -1,5 +1,6 @@
 -- Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka
 import Prelude hiding (take, drop)
+import qualified System.Random as Random
 import Data.List (isPrefixOf)
 import Items ( take, drop, inventory )
 import State ( State(State, comment, holding), printState, initialState)
@@ -61,6 +62,5 @@ gameLoop state = do
 
 main :: IO State
 main = do
-    -- printLines introductionText
     printLines instructionsText
     gameLoop(look initialState)

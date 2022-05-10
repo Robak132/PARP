@@ -1,7 +1,4 @@
-/.idea
+**/.idea
+**/dist
 
 # Haskell
-Haskell/*
-!Haskell/*.hs
-!Haskell/*.sh
-!Haskell/*.pdf

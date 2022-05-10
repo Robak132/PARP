@@ -1,5 +1,6 @@
 module State where
     import Utilites ( printLines )
+    import qualified System.Random as Random
     import Character (Character (Character, location, name), basicSkeleton, basicGuardian, fallenCat, character)
     data State = State {
             comment :: [String],
@@ -7,7 +8,8 @@ module State where
             items_at :: [(String, String)],
             enemies :: [Character],
             door :: [(String, String, String, Bool)],
-            holding :: [String]
+            holding :: [String],
+            randomGen :: Random.StdGen 
         } deriving (Show)
 
     printState :: State -> IO ()
@@ -40,3 +42,4 @@ module State where
     -- Holding
         [
         ]
+        (Random.mkStdGen 2137)
