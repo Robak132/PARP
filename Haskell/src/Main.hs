@@ -3,11 +3,13 @@ import Prelude hiding (take, drop)
 import qualified System.Random as Random
 import Data.List (isPrefixOf)
 import Items ( take, drop, inventory )
-import State ( State(State, comment, holding), printState, initialState)
+import State ( State(State, comment, holding, randomGen, you), printState, initialState)
 import Room (go, look, search, flee)
 import Utilites ( printLines, split, splitCommand )
 import System.Process ( system )
 import Combat ( attack )
+import System.Random (initStdGen)
+import Character (alive)
 
 instructionsText :: [String]
 instructionsText = [
@@ -31,36 +33,40 @@ help state = state { comment = instructionsText }
 gameLoop :: State -> IO State
 gameLoop state = do
     printState state
-    cmd <- getLine
-    system "clear"
-    if cmd /= "quit" then
-        gameLoop (case cmd of
-            "inventory" -> inventory state
-            "i" -> inventory state
+    if alive (you state) then do
+        cmd <- getLine
+        if cmd /= "quit" then
+            gameLoop (case cmd of
+                "inventory" -> inventory state
+                "i" -> inventory state
 
-            "instructions" -> help state
-            "help" -> help state
+                "instructions" -> help state
+                "help" -> help state
 
-            "look" -> look state
-            "search" -> search state
+                "look" -> look state
+                "search" -> search state
 
-            "flee n" -> flee "N" state
-            "flee s" -> flee "S" state
-            "flee e" -> flee "E" state
-            "flee w" -> flee "W" state
+                "flee n" -> flee "N" state
+                "flee s" -> flee "S" state
+                "flee e" -> flee "E" state
+                "flee w" -> flee "W" state
 
-            "n" -> go "N" state
-            "s" -> go "S" state
-            "e" -> go "E" state
-            "w" -> go "W" state
-            _ | "take" `isPrefixOf` cmd -> take (splitCommand cmd) state
-                | "drop" `isPrefixOf` cmd -> drop (splitCommand cmd) state
-                | "attack" `isPrefixOf` cmd -> attack (splitCommand cmd) state
-                | otherwise -> state{comment = ["Wait, that illegal. You used wrong command."]}
-        )
-    else return state
+                "n" -> go "N" state
+                "s" -> go "S" state
+                "e" -> go "E" state
+                "w" -> go "W" state
+                _ | "take" `isPrefixOf` cmd -> take (splitCommand cmd) state
+                    | "drop" `isPrefixOf` cmd -> drop (splitCommand cmd) state
+                    | "attack" `isPrefixOf` cmd -> attack (splitCommand cmd) state
+                    | otherwise -> state{comment = ["Wait, that illegal. You used wrong command."]}
+            )
+        else return state
+    else do 
+        printLines ["The game ends here. Please restart the game."]
+        return state
 
 main :: IO State
 main = do
+    randomGen <- initStdGen
     printLines instructionsText
-    gameLoop(look initialState)
+    gameLoop(look initialState {randomGen=randomGen})

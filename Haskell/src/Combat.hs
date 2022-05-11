@@ -19,7 +19,7 @@ module Combat where
                 let (damageRoll, modifiedState2) = randInt (1, damage attacker) modifiedState
                 harm defender damageRoll modifiedState2 {comment = comment state ++ [name attacker ++ " attacks " ++ name defender ++ " (" ++ show attackRoll ++ ">=" ++ show (defense defender) ++ ") [" ++ show damageRoll ++ " dmg]."]}
             else
-                (defender, modifiedState {comment = comment state ++ [name attacker ++ " failed to attack " ++ name defender ++ " (" ++ show attackRoll ++ ">=" ++ show (defense defender) ++ ")."]})
+                (defender, modifiedState {comment = comment state ++ [name attacker ++ " failed to attack " ++ name defender ++ " (" ++ show attackRoll ++ "<=" ++ show (defense defender) ++ ")."]})
         else
             (defender, state)
         
