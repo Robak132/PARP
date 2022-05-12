@@ -89,7 +89,7 @@ module Room where
                     notElem ("Torch", "acolyte_chamber_2") (items_at state) &&
                     notElem "Torch" (holding state) -> look(state {you = (you state) {location = to room}}) 
                   | Doors.name door == "Gold Door" && 
-                    elem "Key" (holding state) -> lookAdd (state {comment = ["You opened Gold Door using Key."], {you = (you state) {location = to room}}, doors = List.delete door (doors state)})
+                    elem "Key" (holding state) -> lookAdd (state {comment = ["You opened Gold Door using Key."], you = (you state) {location = to room}, doors = List.delete door (doors state)})
                   | status door -> look(state {you = (you state) {location = to room}}) 
                   | otherwise -> lookAdd(state {comment = ["You tried to open " ++ Doors.name door ++ " but is locked"]})
 
