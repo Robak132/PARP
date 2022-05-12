@@ -1,7 +1,7 @@
 module Combat where
     import qualified Data.List as List
     import qualified System.Random as Random
-    import State (State(comment, enemies, you, items, randomGen))
+    import State (State(comment, enemies, you, items, randomGen), randInt)
     import Character (Character(location, name, defense, strength, damage, health), alive)
     
     attack :: String -> State -> State
@@ -44,8 +44,3 @@ module Combat where
         else do
             let modifiedState = state {comment = comment state ++ [name character ++ " is dead."], enemies = List.delete character (enemies state)}
             modifiedState {enemies = modifiedCharacter : enemies state}
-
-    randInt :: (Int, Int) -> State -> (Int, State)
-    randInt a state = do 
-        let (rand, gen) = Random.randomR a (randomGen state)
-        (rand, state {randomGen=gen})

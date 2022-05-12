@@ -3,7 +3,7 @@ import qualified System.Random as Random
 import Prelude hiding (take, drop)
 import Data.List (isPrefixOf)
 import ItemActions ( take, drop, inventory, search)
-import State ( State(State, comment, holding, randomGen, you), printState, initialState)
+import State ( State(comment, holding, randomGen, you), printState, initialState)
 import Room (go, look, flee)
 import Utilites ( printLines, split, splitCommand )
 import Combat ( attack )

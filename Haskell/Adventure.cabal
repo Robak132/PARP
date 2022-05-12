@@ -7,7 +7,7 @@ cabal-version:       >=1.10
 
 executable Adventure
   main-is:             Main.hs
-  other-modules:       Character Combat Items Room State Utilites Doors ItemActions
+  other-modules:       Character Combat Items Room State Utilites Doors Traps ItemActions
   build-depends:       base >=4.12 && <4.13, random >=1.2 && <1.3
   hs-source-dirs:      src
   default-language:    Haskell2010

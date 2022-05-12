@@ -1,11 +1,12 @@
 module Room where
     import qualified Data.List as List
-    import State (State(comment, you, items, enemies, doors, holding))
+    import State (State(comment, you, items, enemies, doors, traps, holding), randInt)
     import Character (Character(name, location), alive)
     import Combat (harm)
     import Doors (Door (location_from, location_to, status, name), moonlightDoor, goldDoor)
+    import Traps (Trap (location_from, location_to, dodge, damage))
     import Items (Item(Item, itemLocation, name), torch, key)
-    
+
     data RoomConnection = RoomConnection {
         from :: String,
         by :: String,
@@ -82,16 +83,28 @@ module Room where
             Nothing -> checkDoors room state
             Just enemy -> if not (alive enemy) then checkDoors room state else state { comment = ["You cannot exit room, when is monster in it."]}
 
+    checkTraps :: RoomConnection -> State -> State
+    checkTraps room state = case List.find (\x -> from room == Traps.location_from x && to room == Traps.location_to x || from room == Traps.location_to x && to room == Traps.location_from x) (traps state) of
+        Nothing -> look state
+        Just trap -> do
+            let (dodgeRoll, modifiedState) = randInt (1, 20) state
+            if dodgeRoll >= dodge trap then do
+                let (damageRoll, modifiedState2) = randInt (1, Traps.damage trap) modifiedState
+                let (_, modifiedState3) = harm (you modifiedState2) damageRoll modifiedState2
+                lookAdd modifiedState3 {comment=("Trap was trigerred [" ++ show damageRoll ++ " dmg].") : comment modifiedState3}
+            else
+                lookAdd modifiedState {comment=["Trap wasn't trigerred"]}
+
     checkDoors :: RoomConnection -> State -> State
-    checkDoors room state = case List.find (\x -> from room == location_from x && to room == location_to x || from room == location_to x && to room == location_from x) (doors state)  of 
-        Nothing -> look(state {you = (you state) {location = to room}})
-        Just door | door == moonlightDoor && 
+    checkDoors room state = case List.find (\x -> from room == Doors.location_from x && to room == Doors.location_to x || from room == Doors.location_to x && to room == Doors.location_from x) (doors state)  of
+        Nothing -> checkTraps room (state {you = (you state) {location = to room}})
+        Just door | door == moonlightDoor &&
                     notElem torch {itemLocation="acolyte_chamber_1"} (items state) &&
                     notElem torch {itemLocation="acolyte_chamber_2"} (items state) &&
-                    notElem torch {itemLocation=""} (holding state) -> look(state {you = (you state) {location = to room}}) 
-                  | door == goldDoor && 
-                    elem key {itemLocation=""} (holding state) -> lookAdd (state {comment = ["You opened Gold Door using Key."], you = (you state) {location = to room}, doors = List.delete door (doors state)})
-                  | status door -> look(state {you = (you state) {location = to room}}) 
+                    notElem torch {itemLocation=""} (holding state) -> checkTraps room (state {you = (you state) {location = to room}})
+                  | door == goldDoor &&
+                    elem key {itemLocation=""} (holding state) -> checkTraps room (state {comment = ["You opened Gold Door using Key."], you = (you state) {location = to room}, doors = List.delete door (doors state)})
+                  | status door -> checkTraps room (state {you = (you state) {location = to room}})
                   | otherwise -> lookAdd(state {comment = ["You tried to open " ++ Doors.name door ++ " but is locked"]})
 
     flee :: String -> State -> State
@@ -99,7 +112,7 @@ module Room where
         Nothing -> state { comment = ["There is no way there."]}
         Just room -> case List.find (\x -> location (you state) == location x) (enemies state) of
             Nothing -> checkDoors room state
-            Just enemy -> if alive enemy then do 
+            Just enemy -> if alive enemy then do
                     let (_, modifiedState) = harm (you state) 1 state {comment = []}
                     lookAdd (modifiedState {you = (you modifiedState) {location = to room}})
                 else
@@ -123,7 +136,7 @@ module Room where
     findEnemies :: State -> State
     findEnemies state = case List.find (\x -> location (you state) == location x) (enemies state) of
         Nothing -> state
-        Just enemy -> 
+        Just enemy ->
             if alive enemy then
                 state { comment = comment state ++ ["There is " ++ Character.name enemy ++ " here. Time to fight!"] }
             else

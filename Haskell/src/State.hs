@@ -1,9 +1,10 @@
 module State where
-    import Utilites ( printLines )
     import qualified System.Random as Random
+    import Utilites ( printLines )
     import Character (Character (location, name), basicSkeleton, basicGuardian, fallenCat, character)
     import Doors (Door, goldDoor, moonlightDoor)
     import Items (Item, key, torch, floatingCrystal)
+    import Traps (Trap, bladeTrap, tripWire, dustTrap)
 
     data State = State {
             comment :: [String],
@@ -11,12 +12,18 @@ module State where
             items :: [Item],
             enemies :: [Character],
             doors :: [Door],
+            traps :: [Trap],
             holding :: [Item],
             randomGen :: Random.StdGen 
         } deriving (Show)
 
     printState :: State -> IO ()
     printState state = printLines(comment state)
+
+    randInt :: (Int, Int) -> State -> (Int, State)
+    randInt a state = do 
+        let (rand, gen) = Random.randomR a (randomGen state)
+        (rand, state {randomGen=gen})
 
     initialState :: State
     initialState = State
@@ -40,6 +47,12 @@ module State where
         [
             goldDoor,
             moonlightDoor
+        ]
+    -- Traps
+        [
+            bladeTrap,
+            tripWire,
+            dustTrap
         ]
     -- Holding
         []
