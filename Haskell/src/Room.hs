@@ -3,7 +3,7 @@ module Room where
     import State (State(comment, you, items, enemies, doors, holding))
     import Character (Character(name, location), alive)
     import Combat (harm)
-    import Doors (Door (location_from, location_to, status, name))
+    import Doors (Door (location_from, location_to, status, name), moonlightDoor, goldDoor)
     import Items (Item(Item, itemLocation, name), torch, key)
     
     data RoomConnection = RoomConnection {
@@ -85,11 +85,11 @@ module Room where
     checkDoors :: RoomConnection -> State -> State
     checkDoors room state = case List.find (\x -> from room == location_from x && to room == location_to x || from room == location_to x && to room == location_from x) (doors state)  of 
         Nothing -> look(state {you = (you state) {location = to room}})
-        Just door | Doors.name door == "Moonlight Door" && 
+        Just door | door == moonlightDoor && 
                     notElem torch {itemLocation="acolyte_chamber_1"} (items state) &&
                     notElem torch {itemLocation="acolyte_chamber_2"} (items state) &&
                     notElem torch {itemLocation=""} (holding state) -> look(state {you = (you state) {location = to room}}) 
-                  | Doors.name door == "Gold Door" && 
+                  | door == goldDoor && 
                     elem key {itemLocation=""} (holding state) -> lookAdd (state {comment = ["You opened Gold Door using Key."], you = (you state) {location = to room}, doors = List.delete door (doors state)})
                   | status door -> look(state {you = (you state) {location = to room}}) 
                   | otherwise -> lookAdd(state {comment = ["You tried to open " ++ Doors.name door ++ " but is locked"]})

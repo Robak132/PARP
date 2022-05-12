@@ -2,7 +2,7 @@ module State where
     import Utilites ( printLines )
     import qualified System.Random as Random
     import Character (Character (location, name), basicSkeleton, basicGuardian, fallenCat, character)
-    import Doors (Door (Door))
+    import Doors (Door, goldDoor, moonlightDoor)
     import Items (Item, key, torch, floatingCrystal)
 
     data State = State {
@@ -38,8 +38,8 @@ module State where
         ]
     -- Doors
         [
-            Door "Gold Door" "acolyte_chamber_2" "serket_chamber" False,
-            Door "Moonlight Door" "acolyte_chamber_2" "acolyte_chamber_1" False
+            goldDoor,
+            moonlightDoor
         ]
     -- Holding
         []
