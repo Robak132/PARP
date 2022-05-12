@@ -1,7 +1,7 @@
 module Combat where
     import qualified Data.List as List
     import qualified System.Random.Stateful as Random
-    import State (State(comment, enemies, you, items_at, randomGen))
+    import State (State(comment, enemies, you, items, randomGen))
     import Character (Character(location, name, defense, strength, damage, health), alive)
     
     attack :: String -> State -> State

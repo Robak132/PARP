@@ -3,13 +3,15 @@ module State where
     import qualified System.Random as Random
     import Character (Character (location, name), basicSkeleton, basicGuardian, fallenCat, character)
     import Doors (Door (Door))
+    import Items (Item, key, torch, floatingCrystal)
+
     data State = State {
             comment :: [String],
             you :: Character,
-            items_at :: [(String, String)],
+            items :: [Item],
             enemies :: [Character],
             doors :: [Door],
-            holding :: [String],
+            holding :: [Item],
             randomGen :: Random.StdGen 
         } deriving (Show)
 
@@ -24,9 +26,9 @@ module State where
         character {location = "entrance"}
     -- Items
         [
-            ("Key", "attendant_room"),
-            ("Torch", "acolyte_chamber_1"),
-            ("Floating Crystal", "false_floor_room")
+            key,
+            torch,
+            floatingCrystal
         ]
     -- Enemies
         [
