@@ -1,13 +1,14 @@
 module State where
     import Utilites ( printLines )
     import qualified System.Random as Random
-    import Character (Character (Character, location, name), basicSkeleton, basicGuardian, fallenCat, character)
+    import Character (Character (location, name), basicSkeleton, basicGuardian, fallenCat, character)
+    import Doors (Door (Door))
     data State = State {
             comment :: [String],
             you :: Character,
             items_at :: [(String, String)],
             enemies :: [Character],
-            door :: [(String, String, String, Bool)],
+            doors :: [Door],
             holding :: [String],
             randomGen :: Random.StdGen 
         } deriving (Show)
@@ -35,8 +36,8 @@ module State where
         ]
     -- Doors
         [
-            ("acolyte_chamber_2", "serket_chamber", "normal_door", False),
-            ("acolyte_chamber_2", "acolyte_chamber_1", "moonlight_door", False)
+            Door "Gold Door" "acolyte_chamber_2" "serket_chamber" False,
+            Door "Moonlight Door" "acolyte_chamber_2" "acolyte_chamber_1" False
         ]
     -- Holding
         []

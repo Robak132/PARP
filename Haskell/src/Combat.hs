@@ -35,15 +35,15 @@ module Combat where
             let modifiedState = state {comment = comment state ++ harmMsg, enemies = List.delete character (enemies state)}
             (modifiedCharacter, modifiedState {enemies = modifiedCharacter : enemies state})
         
-    die :: Character -> State -> (Character, State)
+    die :: Character -> State -> State
     die character state = do
         let modifiedCharacter = (character {health = 0})
 
         if name character == "Doge" then
-            (modifiedCharacter, state {comment = comment state ++ [name character ++ " is dead."], you = modifiedCharacter})
+            state {comment = comment state ++ [name character ++ " is dead."], you = modifiedCharacter}
         else do
             let modifiedState = state {comment = comment state ++ [name character ++ " is dead."], enemies = List.delete character (enemies state)}
-            (modifiedCharacter, modifiedState {enemies = modifiedCharacter : enemies state})
+            modifiedState {enemies = modifiedCharacter : enemies state}
 
     randInt :: (Int, Int) -> State -> (Int, State)
     randInt a state = do 

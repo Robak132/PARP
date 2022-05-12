@@ -1,8 +1,9 @@
 module Room where
     import qualified Data.List as List
-    import State (State(comment, you, items_at, enemies))
+    import State (State(comment, you, items_at, enemies, doors, holding))
     import Character (Character(name, location), alive)
     import Combat (harm)
+    import Doors (Door (location_from, location_to, status, name))
     
     data RoomConnection = RoomConnection {
         from :: String,
@@ -62,7 +63,7 @@ module Room where
         RoomDescription "jar_room" ["You have entered the romm filled with jars. There are some tasty bones and shiny jewels in them"],
         RoomDescription "corridor" ["You are in the dark corridor."],
         RoomDescription "acolyte_chamber_1" ["You are in yet another room. You see door with a symbol of the moon and long shadows."],
-        RoomDescription "acolyte_chamber_2" ["You see tombs of important cats. Unfortunately cats can\'t write, so you don\'t know their names."],
+        RoomDescription "acolyte_chamber_2" ["You see tombs of important cats. Unfortunately cats can\'t read, so you don\'t know their names."],
         RoomDescription "altar_room" ["You walked to the room with big altar in the middle."],
         RoomDescription "false_floor_room" ["The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built."],
         RoomDescription "trap_corridor_a" ["You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that."],
@@ -77,22 +78,31 @@ module Room where
     go direction state = case List.find (\x -> from x == location (you state) && by x == direction) connections of
         Nothing -> state { comment = ["There is no way there."]}
         Just room -> case List.find (\x -> location (you state) == location x) (enemies state) of
-            Nothing -> look(state {you = (you state) {location = to room}})
-            Just enemy -> if alive enemy then 
-                    state { comment = ["You cannot exit room, when is monster in it."]}
-                else
-                    look(state {you = (you state) {location = to room}})
+            Nothing -> checkDoors room state
+            Just enemy -> if not (alive enemy) then checkDoors room state else state { comment = ["You cannot exit room, when is monster in it."]}
+
+    checkDoors :: RoomConnection -> State -> State
+    checkDoors room state = case List.find (\x -> from room == location_from x && to room == location_to x || from room == location_to x && to room == location_from x) (doors state)  of 
+        Nothing -> look(state {you = (you state) {location = to room}})
+        Just door | Doors.name door == "Moonlight Door" && 
+                    notElem ("Torch", "acolyte_chamber_1") (items_at state) &&
+                    notElem ("Torch", "acolyte_chamber_2") (items_at state) &&
+                    notElem "Torch" (holding state) -> look(state {you = (you state) {location = to room}}) 
+                  | Doors.name door == "Gold Door" && 
+                    elem "Key" (holding state) -> lookAdd (state {comment = ["You opened Gold Door using Key."], {you = (you state) {location = to room}}, doors = List.delete door (doors state)})
+                  | status door -> look(state {you = (you state) {location = to room}}) 
+                  | otherwise -> lookAdd(state {comment = ["You tried to open " ++ Doors.name door ++ " but is locked"]})
 
     flee :: String -> State -> State
     flee direction state = case List.find (\x -> from x == location (you state) && by x == direction) connections of
         Nothing -> state { comment = ["There is no way there."]}
         Just room -> case List.find (\x -> location (you state) == location x) (enemies state) of
-            Nothing -> go direction state
+            Nothing -> checkDoors room state
             Just enemy -> if alive enemy then do 
                     let (_, modifiedState) = harm (you state) 1 state {comment = []}
                     lookAdd (modifiedState {you = (you modifiedState) {location = to room}})
                 else
-                    go direction state
+                    checkDoors room state
 
     lookAdd :: State -> State
     lookAdd state = case List.find (\x-> Room.name x == location (you state)) descriptions of

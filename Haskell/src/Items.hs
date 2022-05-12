@@ -7,9 +7,7 @@ module Items where
     take :: String -> State -> State
     take itemName state = case List.find (\x -> itemName == fst x && location (you state) == snd x) (items_at state) of
         Nothing -> state { comment = ["There is no " ++ itemName ++ " in this room"] }
-        Just ("Floating Crystal", _) -> do
-            let (_, modifiedState) = die (you state) state { comment = ["You tried to grab the crystal, but floor collapsed under you. You fall into spikes."] }
-            modifiedState
+        Just ("Floating Crystal", _) -> die (you state) state { comment = ["You tried to grab the crystal, but floor collapsed under you. You fall into spikes."] }
         Just itemTuple -> state { holding = itemName:holding state, items_at = List.delete itemTuple (items_at state), comment = ["You took " ++ itemName ++ " from the ground"]  }
 
     drop :: String -> State -> State
