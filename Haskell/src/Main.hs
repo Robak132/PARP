@@ -1,13 +1,12 @@
 -- Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka
-import Prelude hiding (take, drop)
 import qualified System.Random as Random
+import Prelude hiding (take, drop)
 import Data.List (isPrefixOf)
 import Items ( take, drop, inventory )
 import State ( State(State, comment, holding, randomGen, you), printState, initialState)
 import Room (go, look, search, flee)
 import Utilites ( printLines, split, splitCommand )
 import Combat ( attack )
-import System.Random (initStdGen)
 import Character (alive)
 
 instructionsText :: [String]
@@ -66,6 +65,6 @@ gameLoop state = do
 
 main :: IO State
 main = do
-    randomGen <- initStdGen
+    randomGen <- Random.initStdGen
     printLines instructionsText
     gameLoop(look initialState {randomGen=randomGen})
