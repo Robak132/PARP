@@ -6,7 +6,6 @@ import Items ( take, drop, inventory )
 import State ( State(State, comment, holding, randomGen, you), printState, initialState)
 import Room (go, look, search, flee)
 import Utilites ( printLines, split, splitCommand )
-import System.Process ( system )
 import Combat ( attack )
 import System.Random (initStdGen)
 import Character (alive)
@@ -56,9 +55,9 @@ gameLoop state = do
                 "e" -> go "E" state
                 "w" -> go "W" state
                 _ | "take" `isPrefixOf` cmd -> take (splitCommand cmd) state
-                    | "drop" `isPrefixOf` cmd -> drop (splitCommand cmd) state
-                    | "attack" `isPrefixOf` cmd -> attack (splitCommand cmd) state
-                    | otherwise -> state{comment = ["Wait, that illegal. You used wrong command."]}
+                  | "drop" `isPrefixOf` cmd -> drop (splitCommand cmd) state
+                  | "attack" `isPrefixOf` cmd -> attack (splitCommand cmd) state
+                  | otherwise -> state{comment = ["Wait, that illegal. You used wrong command."]}
             )
         else return state
     else do 

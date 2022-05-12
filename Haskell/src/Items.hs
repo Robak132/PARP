@@ -1,7 +1,7 @@
 module Items where
+    import qualified Data.List as List
     import State ( State(comment, holding, items_at, you) )
     import Character (Character(location))
-    import qualified Data.List as List
     import Combat (die)
     
     take :: String -> State -> State
