@@ -2,7 +2,7 @@ module Utilites where
     import qualified Data.List as List
 
     printLines :: [String] -> IO ()
-    printLines xs = putStr (unlines xs)
+    printLines xs = putStr (unlines ("" : xs))
 
     split :: String -> [String]
     split s = case dropWhile (==' ') s of

@@ -2,6 +2,7 @@ module Room where
     import qualified Data.List as List
     import State (State(comment, you, items_at, enemies))
     import Character (Character(name, location), alive)
+    import Combat (harm)
     
     data RoomConnection = RoomConnection {
         from :: String,
@@ -29,14 +30,18 @@ module Room where
         RoomConnection "altar_room" "S" "antechamber",
         RoomConnection "altar_room" "E" "corridor",
         RoomConnection "false_floor_room" "S" "corridor",
-        RoomConnection "false_floor_room" "N" "trap_corridor",
-        RoomConnection "trap_corridor" "S" "false_floor_room",
-        RoomConnection "trap_corridor" "N" "treasure_room",
+        RoomConnection "false_floor_room" "N" "trap_corridor_a",
+        RoomConnection "trap_corridor_a" "S" "false_floor_room",
+        RoomConnection "trap_corridor_a" "N" "trap_corridor_b",
+        RoomConnection "trap_corridor_b" "S" "trap_corridor_a",
+        RoomConnection "trap_corridor_b" "N" "trap_corridor_c",
+        RoomConnection "trap_corridor_c" "S" "trap_corridor_b",
+        RoomConnection "trap_corridor_c" "N" "treasure_room",
         RoomConnection "serket_chamber" "W" "acolyte_chamber_2",
         RoomConnection "serket_chamber" "N" "guardian",
         RoomConnection "guardian" "S" "serket_chamber",
         RoomConnection "guardian" "N" "sarcophagus",
-        RoomConnection "treasure_room" "S" "trap_corridor",
+        RoomConnection "treasure_room" "S" "trap_corridor_c",
         RoomConnection "treasure_room" "N" "hidden_exit",
         RoomConnection "sarcophagus" "S" "guardian",
         RoomConnection "sarcophagus" "E" "hidden_exit",
@@ -60,7 +65,7 @@ module Room where
         RoomDescription "acolyte_chamber_2" ["You see tombs of important cats. Unfortunately cats can\'t write, so you don\'t know their names."],
         RoomDescription "altar_room" ["You walked to the room with big altar in the middle."],
         RoomDescription "false_floor_room" ["The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built."],
-        RoomDescription "trap_corridor" ["You have entered yet another dark corridor, but this one looks scarier."],
+        RoomDescription "trap_corridor_a" ["You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that."],
         RoomDescription "serket_chamber" ["The hieroglyphs in this room describe how every cat devotes their life to lasagna, and therefore is cursed dou to its greed"],
         RoomDescription "guardian" ["You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole"],
         RoomDescription "treasure_room" ["There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff"],
@@ -81,7 +86,18 @@ module Room where
     flee :: String -> State -> State
     flee direction state = case List.find (\x -> from x == location (you state) && by x == direction) connections of
         Nothing -> state { comment = ["There is no way there."]}
-        Just room -> look(state {you = (you state) {location = to room} })
+        Just room -> case List.find (\x -> location (you state) == location x) (enemies state) of
+            Nothing -> go direction state
+            Just enemy -> if alive enemy then do 
+                    let (_, modifiedState) = harm (you state) 1 state {comment = []}
+                    lookAdd (modifiedState {you = (you modifiedState) {location = to room}})
+                else
+                    go direction state
+
+    lookAdd :: State -> State
+    lookAdd state = case List.find (\x-> Room.name x == location (you state)) descriptions of
+        Nothing -> findExits state { comment = comment state ++ ["There is nothing here, probably an error."]}
+        Just desc -> findExits state { comment = comment state ++ description desc }
 
     look :: State -> State
     look state = case List.find (\x-> Room.name x == location (you state)) descriptions of

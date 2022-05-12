@@ -26,13 +26,23 @@ module Combat where
     harm :: Character -> Int -> State -> (Character, State)
     harm character dmg state = do
         let newHealth = health character - dmg
-        let harmMsg = if newHealth > 0 then ["Remaining HP: " ++ show newHealth] else [name character ++ " is dead"]
+        let harmMsg = if newHealth > 0 then ["Remaining HP: " ++ show newHealth] else [name character ++ " is dead."]
         let modifiedCharacter = (character {health = newHealth})
 
         if name character == "Doge" then
             (modifiedCharacter, state {comment = comment state ++ harmMsg, you = modifiedCharacter})
         else do
             let modifiedState = state {comment = comment state ++ harmMsg, enemies = List.delete character (enemies state)}
+            (modifiedCharacter, modifiedState {enemies = modifiedCharacter : enemies state})
+        
+    die :: Character -> State -> (Character, State)
+    die character state = do
+        let modifiedCharacter = (character {health = 0})
+
+        if name character == "Doge" then
+            (modifiedCharacter, state {comment = comment state ++ [name character ++ " is dead."], you = modifiedCharacter})
+        else do
+            let modifiedState = state {comment = comment state ++ [name character ++ " is dead."], enemies = List.delete character (enemies state)}
             (modifiedCharacter, modifiedState {enemies = modifiedCharacter : enemies state})
 
     randInt :: (Int, Int) -> State -> (Int, State)

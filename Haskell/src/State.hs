@@ -18,8 +18,7 @@ module State where
     initialState :: State
     initialState = State
     -- Comment
-        [
-        ]
+        []
     -- You
         character {location = "entrance"}
     -- Items
@@ -40,6 +39,6 @@ module State where
             ("acolyte_chamber_2", "acolyte_chamber_1", "moonlight_door", False)
         ]
     -- Holding
-        [
-        ]
+        []
+    -- Random generator
         (Random.mkStdGen 2137)
