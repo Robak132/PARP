@@ -69,6 +69,8 @@ module Room where
         RoomDescription "altar_room" ["You walked to the room with big altar in the middle."],
         RoomDescription "false_floor_room" ["The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built."],
         RoomDescription "trap_corridor_a" ["You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that."],
+        RoomDescription "trap_corridor_b" ["You are going further through corridor, a thin wire can be seen on the floor."],
+        RoomDescription "trap_corridor_c" ["You are going through corridor, one of stone slabs looks suspiciously."],
         RoomDescription "serket_chamber" ["The hieroglyphs in this room describe how every cat devotes their life to lasagna, and therefore is cursed dou to its greed"],
         RoomDescription "guardian" ["You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole"],
         RoomDescription "treasure_room" ["There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff"],
