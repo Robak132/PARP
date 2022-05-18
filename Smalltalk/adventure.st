@@ -210,30 +210,40 @@ Object subclass: Game [
     ]
 
     take: item [
-        |locatedItems collection|
-        locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
-        self printLines: locatedItems.
-        (locatedItems includes: item) ifTrue: [
-            player addItem: item.
-            collection := items at: (player getCurrentRoom).
-            collection remove: item.
-            items at: (player getCurrentRoom) put: collection.
-            self printLines: {'You took ', item, ' from the ground.'}.
-        ] ifFalse: [
-            self printLines: {'There is no ', item, ' in this room.'}.
+        |locatedItems collection enemy|
+        enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
+        (enemy = '') ifFalse: [
+            self printLines: {'You cannot take items in room when there is ', (enemy getName), ' in it.' }, #('').
+        ] ifTrue: [
+            locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
+            self printLines: locatedItems.
+            (locatedItems includes: item) ifTrue: [
+                player addItem: item.
+                collection := items at: (player getCurrentRoom).
+                collection remove: item.
+                items at: (player getCurrentRoom) put: collection.
+                self printLines: {'You took ', item, ' from the ground.'}.
+            ] ifFalse: [
+                self printLines: {'There is no ', item, ' in this room.'}.
+            ]
         ]
     ]
 
     drop: item [
-        |collection|
-        (((player getInventory) includes: item)) ifTrue: [
-            player removeItem: item.
-            collection := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
-            collection add: item.
-            items at: (player getCurrentRoom) put: collection.
-            self printLines: {'You drop ', item, ' to the ground.'}.
-        ] ifFalse: [
-            self printLines: {'You dont have ', item, ' in your inventory'}.
+        |collectio enemy|
+        enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
+        (enemy = '') ifFalse: [
+            self printLines: {'You cannot drop items in room when there is ', (enemy getName), ' in it.' }, #('').
+        ] ifTrue: [
+            (((player getInventory) includes: item)) ifTrue: [
+                player removeItem: item.
+                collection := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
+                collection add: item.
+                items at: (player getCurrentRoom) put: collection.
+                self printLines: {'You drop ', item, ' to the ground.'}.
+            ] ifFalse: [
+                self printLines: {'You dont have ', item, ' in your inventory'}.
+            ]
         ]
     ]
 
