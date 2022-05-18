@@ -29,8 +29,39 @@ Object subclass: Player [
         inventory remove: item
     ]
 ]
+Object subclass: Enemy [
+    | name location health defense strength damage|
+    Enemy class >> new [
+        | enemy |
+        enemy := super new.
+        ^enemy.
+    ]
+    init: name_ health: health_ defense: defense_ strength: strength_ damage: damage_ [
+        name := name_.
+        health := health_.
+        defense := defense_.
+        strength := strength_.
+        damage := damage_.
+    ]
+    getName [
+        ^name
+    ]
+    getHealth [
+        ^health
+    ]
+    getDefense [
+        ^defense
+    ]
+    getStrength [
+        ^strength
+    ]
+    getDamage [
+        ^damage
+    ]
+]
+
 Object subclass: Game [
-    | player paths items room_descriptions isGameOver |
+    | player paths enemies items room_descriptions isGameOver |
 
     instructionsText := #(
         'Available commands are:'
@@ -116,6 +147,11 @@ Object subclass: Game [
         items at: 'attendant_room' put: (self initOrderedCollection: 'Key').
         items at: 'acolyte_chamber_1' put: (self initOrderedCollection: 'Torch').
         items at: 'false_floor_room' put: (self initOrderedCollection: 'Floating Crystal').
+
+        enemies := Dictionary new.
+        enemies at: 'attendant_room' put: (Enemy new init: 'Skele-cat'        health: 3 defense: 12 strength: 2  damage: 2).
+        enemies at: 'guardian'       put: (Enemy new init: 'Catmint Guardian' health: 9 defense: 9  strength: -4 damage: 6).
+        enemies at: 'sarcophagus'    put: (Enemy new init: 'Fallen Cat'       health: 6 defense: 12 strength: 0  damage: 4).
     ]
 
     initOrderedCollection: element [
@@ -140,9 +176,28 @@ Object subclass: Game [
     ]
 
     look [
-        self printLines: (room_descriptions at: (player getCurrentRoom) ifAbsent: [#('Nothing here, probably an error')])
+        |enemy|
+        enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
+        self printLines: (room_descriptions at: (player getCurrentRoom) ifAbsent: [#('Nothing here, probably an error')]).
+        (enemy = '') ifFalse: [
+            self printLines: {'There is ', (enemy getName), ' here. Time to fight!'}.
+        ]
     ]
 
+    search [
+        |locatedItems enemy|
+        enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
+        (enemy = '') ifFalse: [
+            self printLines: {'You cannot search this room when there is ', (enemy getName), ' in it.' }, #('').
+        ] ifTrue: [
+            locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
+            (locatedItems size = 0) ifTrue: [
+                self printLines: #('You found nothing' ), #('').
+            ] ifFalse: [
+                self printLines: #('You found these items:' ), locatedItems, #('').
+            ]
+        ].
+    ]
     go: direction [
         | new_room |
         new_room := (paths at: ((player getCurrentRoom), direction) ifAbsent: [player getCurrentRoom]).
@@ -229,13 +284,7 @@ Object subclass: Game [
             ].
 
             (cmd = 'search') ifTrue: [
-                |locatedItems|
-                locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
-                (locatedItems size = 0) ifTrue: [
-                    self printLines: #('You found nothing' ), #('').
-                ] ifFalse: [
-                    self printLines: #('You found these items:' ), locatedItems, #('').
-                ].
+                self search.
                 isUnknown := false
             ].
 
