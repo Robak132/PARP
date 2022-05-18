@@ -1,34 +1,5 @@
 #!/usr/bin/env gst
 "Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka."
-Object subclass: Player [
-    | currentlyAt inventory |
-    Player class >> new [
-        | player |
-        player := super new.
-        player init.
-        ^ player
-    ]
-
-    init [
-        currentlyAt := 'entrance'.
-        inventory := OrderedCollection new.
-    ]
-    getCurrentRoom [
-        ^currentlyAt
-    ]
-    setCurrentRoom: currentRoom [
-        currentlyAt := currentRoom
-    ]
-    getInventory [
-        ^inventory
-    ]
-    addItem: item [
-        inventory add: item
-    ]
-    removeItem: item [
-        inventory remove: item
-    ]
-]
 Object subclass: Enemy [
     | name location health defense strength damage|
     Enemy class >> new [
@@ -59,7 +30,41 @@ Object subclass: Enemy [
         ^damage
     ]
 ]
+Enemy subclass: Player [
+    | currentlyAt inventory |
+    Player class >> new [
+        | player |
+        player := super new.
+        ^ player
+    ]
 
+    init: health_ defense: defense_ strength: strength_ damage: damage_ [
+        super init: '' health: health_ defense: defense_ strength: strength_ damage: damage_.
+        currentlyAt := 'entrance'.
+        inventory := OrderedCollection new.
+    ]
+    getCurrentRoom [
+        ^currentlyAt
+    ]
+    setCurrentRoom: currentRoom [
+        currentlyAt := currentRoom
+    ]
+    getInventory [
+        ^inventory
+    ]
+    addItem: item [
+        inventory add: item
+    ]
+    removeItem: item [
+        inventory remove: item
+    ]
+    alive [
+        ^(health > 0)
+    ]
+    notAlive [
+        ^(health = 0)
+    ]
+]
 Object subclass: Game [
     | player paths enemies items room_descriptions isGameOver |
 
@@ -86,7 +91,7 @@ Object subclass: Game [
     ]
 
     init [
-        player := Player new.
+        player := (Player new init: 6 defense: 12 strength: 0  damage: 4).
         isGameOver := false.
 
         paths := Dictionary new.
@@ -181,7 +186,8 @@ Object subclass: Game [
         self printLines: (room_descriptions at: (player getCurrentRoom) ifAbsent: [#('Nothing here, probably an error')]).
         (enemy = '') ifFalse: [
             self printLines: {'There is ', (enemy getName), ' here. Time to fight!'}.
-        ]
+        ].
+        self printLines: #('').
     ]
 
     search [
@@ -230,7 +236,7 @@ Object subclass: Game [
     ]
 
     drop: item [
-        |collectio enemy|
+        |collection enemy|
         enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
         (enemy = '') ifFalse: [
             self printLines: {'You cannot drop items in room when there is ', (enemy getName), ' in it.' }, #('').
@@ -247,21 +253,28 @@ Object subclass: Game [
         ]
     ]
 
+    join: list [
+        | str |
+        str := ''.
+        list do: [:each | str := ((str = '') ifTrue: [each] ifFalse: [str, ' ', each])].
+        ^str.
+    ]
+
     "Run the game."
     run [
         | cmd argument isUnknown |
 
         self look.
-        self printLines: #('').
         self printInstructions.
 
         "Game loop."
-        [isGameOver] whileFalse: [
-            | args |
+        [player notAlive | isGameOver] whileFalse: [
+            | args str |
             isUnknown := true.
             args := (self readCommand) substrings.
             cmd := args first.
-            argument := args last.
+            args removeFirst.
+            argument := self join: args.
 
             ((cmd = 'inventory') | (cmd = 'i')) ifTrue: [
                 self printLines: #('Your inventory:' ), (player getInventory), #('').
