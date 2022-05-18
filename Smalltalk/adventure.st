@@ -1,6 +1,7 @@
+#!/usr/bin/env gst
 "Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka."
 Object subclass: Player [
-    | currentlyAt |
+    | currentlyAt inventory |
     Player class >> new [
         | player |
         player := super new.
@@ -10,6 +11,7 @@ Object subclass: Player [
 
     init [
         currentlyAt := 'entrance'.
+        inventory := OrderedCollection new.
     ]
     getCurrentRoom [
         ^currentlyAt
@@ -17,22 +19,31 @@ Object subclass: Player [
     setCurrentRoom: currentRoom [
         currentlyAt := currentRoom
     ]
+    getInventory [
+        ^inventory
+    ]
+    addItem: item [
+        inventory add: item
+    ]
+    removeItem: item [
+        inventory remove: item
+    ]
 ]
 Object subclass: Game [
-    | player paths room_descriptions isGameOver |
+    | player paths items room_descriptions isGameOver |
 
     instructionsText := #(
         'Available commands are:'
-        'n,  s,  e,  w,                 -- to go in that direction.' 
+        'n,  s,  e,  w,                 -- to go in that direction.'   "Working"
         'flee n, flee s, flee e, flee w -- to flee from combat.'
-        'take Object.                   -- to pick up an object.'
-        'drop Object                    -- to put down an object.'
+        'take Object.                   -- to pick up an object.'      "Working"
+        'drop Object                    -- to put down an object.'     "Working"
         'look                           -- to look around you again.'  "Working"
-        'search                         -- to search the room.'
-        'inventory, i                   -- to check inventory.'
+        'search                         -- to search the room.'        "Working"
+        'inventory, i                   -- to check inventory.'        "Working"
         'attack Enemy                   -- to attack the enemy.'
         'instructions, help             -- to see this message again.' "Working"
-        'quit                           -- to end the game and quit.'
+        'quit                           -- to end the game and quit.'  "Working"
         ''
     ).
  
@@ -100,6 +111,18 @@ Object subclass: Game [
         room_descriptions at: 'treasure_room' put: #('There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff').
         room_descriptions at: 'sarcophagus' put: #('There is a big sarcophagus in the middle of the room').
         room_descriptions at: 'hidden_exit' put: #('There are two statues of cats in this room. Under one of them a small breeze can be felt.' 'You made it to the end, please enter the quit command.').
+
+        items := Dictionary new.
+        items at: 'attendant_room' put: (self initOrderedCollection: 'Key').
+        items at: 'acolyte_chamber_1' put: (self initOrderedCollection: 'Torch').
+        items at: 'false_floor_room' put: (self initOrderedCollection: 'Floating Crystal').
+    ]
+
+    initOrderedCollection: element [
+        |list|
+        list := OrderedCollection new.
+        list add: element.
+        ^list.
     ]
 
     "Print strings from array in separate lines."
@@ -131,9 +154,37 @@ Object subclass: Game [
         ]
     ]
 
+    take: item [
+        |locatedItems collection|
+        locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
+        self printLines: locatedItems.
+        (locatedItems includes: item) ifTrue: [
+            player addItem: item.
+            collection := items at: (player getCurrentRoom).
+            collection remove: item.
+            items at: (player getCurrentRoom) put: collection.
+            self printLines: {'You took ', item, ' from the ground.'}.
+        ] ifFalse: [
+            self printLines: {'There is no ', item, ' in this room.'}.
+        ]
+    ]
+
+    drop: item [
+        |collection|
+        (((player getInventory) includes: item)) ifTrue: [
+            player removeItem: item.
+            collection := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
+            collection add: item.
+            items at: (player getCurrentRoom) put: collection.
+            self printLines: {'You drop ', item, ' to the ground.'}.
+        ] ifFalse: [
+            self printLines: {'You dont have ', item, ' in your inventory'}.
+        ]
+    ]
+
     "Run the game."
     run [
-        | cmd isUnknown |
+        | cmd argument isUnknown |
 
         self look.
         self printLines: #('').
@@ -141,8 +192,16 @@ Object subclass: Game [
 
         "Game loop."
         [isGameOver] whileFalse: [
+            | args |
             isUnknown := true.
-            cmd := self readCommand.
+            args := (self readCommand) substrings.
+            cmd := args first.
+            argument := args last.
+
+            ((cmd = 'inventory') | (cmd = 'i')) ifTrue: [
+                self printLines: #('Your inventory:' ), (player getInventory), #('').
+                isUnknown := false
+            ].
 
             ((cmd = 'n') | (cmd = 'N')) ifTrue: [
                 self go: 'N'.
@@ -169,6 +228,17 @@ Object subclass: Game [
                 isUnknown := false
             ].
 
+            (cmd = 'search') ifTrue: [
+                |locatedItems|
+                locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
+                (locatedItems size = 0) ifTrue: [
+                    self printLines: #('You found nothing' ), #('').
+                ] ifFalse: [
+                    self printLines: #('You found these items:' ), locatedItems, #('').
+                ].
+                isUnknown := false
+            ].
+
             ((cmd = 'instructions') | (cmd = 'help')) ifTrue: [
                 self printInstructions.
                 isUnknown := false
@@ -176,6 +246,16 @@ Object subclass: Game [
 
             cmd = 'quit' ifTrue: [
                 isGameOver := true.
+                isUnknown := false
+            ].
+
+            cmd = 'take' ifTrue: [
+                self take: argument.
+                isUnknown := false
+            ].
+
+            cmd = 'drop' ifTrue: [
+                self drop: argument.
                 isUnknown := false
             ].
 
