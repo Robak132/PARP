@@ -1,7 +1,7 @@
 module Room where
     import qualified Data.List as List
     import State (State(comment, you, items, enemies, doors, traps, holding), randInt)
-    import Character (Character(name, location), alive)
+    import Character (Character(name, location, health), alive)
     import Combat (harm)
     import Doors (Door (location_from, location_to, status, name), moonlightDoor, goldDoor)
     import Traps (Trap (location_from, location_to, dodge, damage))
@@ -37,9 +37,7 @@ module Room where
         RoomConnection "trap_corridor_a" "S" "false_floor_room",
         RoomConnection "trap_corridor_a" "N" "trap_corridor_b",
         RoomConnection "trap_corridor_b" "S" "trap_corridor_a",
-        RoomConnection "trap_corridor_b" "N" "trap_corridor_c",
-        RoomConnection "trap_corridor_c" "S" "trap_corridor_b",
-        RoomConnection "trap_corridor_c" "N" "treasure_room",
+        RoomConnection "trap_corridor_b" "N" "treasure_room",
         RoomConnection "serket_chamber" "W" "acolyte_chamber_2",
         RoomConnection "serket_chamber" "N" "guardian",
         RoomConnection "guardian" "S" "serket_chamber",
@@ -67,13 +65,12 @@ module Room where
         RoomDescription "acolyte_chamber_1" ["You are in yet another room. You see door with a symbol of the moon and long shadows."],
         RoomDescription "acolyte_chamber_2" ["You see tombs of important cats. Unfortunately cats can\'t read, so you don\'t know their names."],
         RoomDescription "altar_room" ["You walked to the room with big altar in the middle."],
-        RoomDescription "false_floor_room" ["The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built."],
-        RoomDescription "trap_corridor_a" ["You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that."],
-        RoomDescription "trap_corridor_b" ["You are going further through corridor, a thin wire can be seen on the floor."],
-        RoomDescription "trap_corridor_c" ["You are going through corridor, one of stone slabs looks suspiciously."],
+        RoomDescription "false_floor_room" ["The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built. You see massive blades falling from the roof and reseting after that on the north."],
+        RoomDescription "trap_corridor_a" ["You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that on your south."],
+        RoomDescription "trap_corridor_b" ["You are going further through corridor, one of the slabs on the north looks suspiciously."],
         RoomDescription "serket_chamber" ["The hieroglyphs in this room describe how every cat devotes their life to lasagna, and therefore is cursed dou to its greed"],
         RoomDescription "guardian" ["You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole"],
-        RoomDescription "treasure_room" ["There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff"],
+        RoomDescription "treasure_room" ["There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff, one of the slabs on the south of you looks suspiciously."],
         RoomDescription "sarcophagus" ["There is a big sarcophagus in the middle of the room"],
         RoomDescription "hidden_exit" ["There are two statues of cats in this room. Under one of them a small breeze can be felt.", "You made it to the end, please enter the 'quit' command."]
         ]
@@ -92,10 +89,11 @@ module Room where
             let (dodgeRoll, modifiedState) = randInt (1, 20) state
             if dodgeRoll >= dodge trap then do
                 let (damageRoll, modifiedState2) = randInt (1, Traps.damage trap) modifiedState
-                let (_, modifiedState3) = harm (you modifiedState2) damageRoll modifiedState2
-                lookAdd modifiedState3 {comment=("Trap was trigerred [" ++ show damageRoll ++ " dmg].") : comment modifiedState3}
+                let (modifiedCharacter, modifiedState3) = harm (you modifiedState2) damageRoll modifiedState2
+
+                lookAdd modifiedState3 {comment=["Trap was trigerred [" ++ show damageRoll ++ " dmg]. Remaining HP " ++ show (health modifiedCharacter)], you = ((you modifiedState3) {location = to room})}
             else
-                lookAdd modifiedState {comment=["Trap wasn't trigerred"]}
+                lookAdd modifiedState {comment=["Trap wasn't trigerred"], you = ((you modifiedState) {location = to room})}
 
     checkDoors :: RoomConnection -> State -> State
     checkDoors room state = case List.find (\x -> from room == Doors.location_from x && to room == Doors.location_to x || from room == Doors.location_to x && to room == Doors.location_from x) (doors state)  of

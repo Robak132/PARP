@@ -4,7 +4,7 @@ module State where
     import Character (Character (location, name), basicSkeleton, basicGuardian, fallenCat, character)
     import Doors (Door, goldDoor, moonlightDoor)
     import Items (Item, key, torch, floatingCrystal)
-    import Traps (Trap, bladeTrap, tripWire, dustTrap)
+    import Traps (Trap, bladeTrap, slabTrap)
 
     data State = State {
             comment :: [String],
@@ -51,8 +51,7 @@ module State where
     -- Traps
         [
             bladeTrap,
-            tripWire,
-            dustTrap
+            slabTrap
         ]
     -- Holding
         []
