@@ -187,7 +187,6 @@ Object subclass: Game [
         (enemy = '') ifFalse: [
             self printLines: {'There is ', (enemy getName), ' here. Time to fight!'}.
         ].
-        self printLines: #('').
     ]
 
     search [
@@ -204,15 +203,37 @@ Object subclass: Game [
             ]
         ].
     ]
-    go: direction [
+    move: direction [
         | new_room |
         new_room := (paths at: ((player getCurrentRoom), direction) ifAbsent: [player getCurrentRoom]).
         new_room == (player getCurrentRoom) ifFalse: [
             player setCurrentRoom: new_room.
             self look.
+            ^true.
         ] ifTrue: [
-            self printLines: #('There is no way there.')
+            self printLines: #('There is no way there.').
+            ^false.
         ]
+    ]
+    go: direction [
+        | new_room enemy |
+        enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
+        (enemy = '') ifFalse: [
+            self printLines: {'You cannot exit room, when is ', (enemy getName), ' in it.' }, #('').
+        ] ifTrue: [
+            self move: (direction asUppercase).
+            self printLines: #('').
+        ]
+    ]
+    flee: direction [
+        | enemy |
+        enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
+        (self move: (direction asUppercase)) ifTrue: [
+            (enemy = '') ifFalse: [
+                self printLines: {(enemy getName), ' attacks you when you leave.'}.
+            ]
+        ].
+        self printLines: #('').
     ]
 
     take: item [
@@ -262,14 +283,13 @@ Object subclass: Game [
 
     "Run the game."
     run [
-        | cmd argument isUnknown |
-
-        self look.
         self printInstructions.
+        self look.
+        self printLines: #('').
 
         "Game loop."
         [player notAlive | isGameOver] whileFalse: [
-            | args str |
+            | cmd args argument isUnknown |
             isUnknown := true.
             args := (self readCommand) substrings.
             cmd := args first.
@@ -281,6 +301,11 @@ Object subclass: Game [
                 isUnknown := false
             ].
 
+            (cmd = 'flee') ifTrue: [
+                self flee: argument.
+                isUnknown := false
+            ].
+            
             ((cmd = 'n') | (cmd = 'N')) ifTrue: [
                 self go: 'N'.
                 isUnknown := false
@@ -303,6 +328,7 @@ Object subclass: Game [
 
             (cmd = 'look') ifTrue: [
                 self look.
+                self printLines: #('').
                 isUnknown := false
             ].
 
