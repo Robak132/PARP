@@ -86,7 +86,7 @@ Object subclass: Enemy [
         ^(health > 0)
     ]
     notAlive [
-        ^(health = 0)
+        ^(health <= 0)
     ]
 ]
 
@@ -110,7 +110,7 @@ Enemy subclass: Player [
     ]
     harm: damage [
         super harm: damage.
-        (health <= 0) ifTrue: [
+        (self notAlive) ifTrue: [
             IOModule new printLines: {name, ' is dead.'}.
         ] ifFalse: [
             IOModule new printLines: {'Remaining HP: ', health displayString}.
@@ -131,6 +131,72 @@ Enemy subclass: Player [
     removeItem: item [
         inventory remove: item
     ]
+    hasItem: item [
+        ^(inventory includes: item)
+    ]
+    notHasItem: item [
+        (self hasItem: item) ifTrue: [^false] ifFalse: [^true]
+    ]
+]
+
+Object subclass: Door [
+    | name status |
+    Door class >> new [
+        | door |
+        door := super new.
+        ^door
+    ]
+    init: name_ status: status_ [
+        name := name_.
+        status := status_.
+    ]
+    getName [
+        ^name
+    ]
+    unlocked: player itemList: items [
+        ^true
+    ]
+]
+
+Door subclass: LockedKeyDoor [
+    LockedKeyDoor class >> new [
+        | door |
+        door := super new.
+        ^door
+    ]
+    init: name_ [
+        ^super init: name_ status: false.
+    ]
+    unlocked: player itemList: items [
+        status ifTrue: [
+            ^status.
+        ] ifFalse: [
+            (player hasItem: 'Key') ifTrue: [
+                status := true.
+                IOModule new printLines: {name, ' was unlocked.'}.
+            ]
+        ]
+    ]
+]
+
+Door subclass: MoonlightDoor [
+    MoonlightDoor class >> new [
+        | door |
+        door := super new.
+        ^door
+    ]
+    init: name_ [
+        ^super init: name_ status: false.
+    ]
+    unlocked: player itemList: items [
+        ((items at: ('acolyte_chamber_1') ifAbsent: [OrderedCollection new]) includes: 'Torch') ifTrue: [
+            ^false.
+        ].
+        ((items at: ('acolyte_chamber_2') ifAbsent: [OrderedCollection new]) includes: 'Torch') ifTrue: [
+            ^false.
+        ].
+        ^(player notHasItem: 'Torch')
+    ]
 ]
 
 OrderedCollection extend [
@@ -143,7 +209,7 @@ OrderedCollection extend [
 ]
 
 Object subclass: Game [
-    | player paths enemies items room_descriptions isGameOver |
+    | player paths doors enemies items room_descriptions isGameOver  |
  
     Game class >> new [
         | g |
@@ -202,17 +268,21 @@ Object subclass: Game [
         room_descriptions at: 'altar_room' put: #('You walked to the room with big altar in the middle.').
         room_descriptions at: 'false_floor_room' put: #('The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built. You see massive blades falling from the roof and reseting after that on the north.').
         room_descriptions at: 'trap_corridor_a' put: #('You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that on your south.').
-        room_descriptions at: 'trap_corridor_a' put: #('You are going further through corridor, one of the slabs on the north looks suspiciously.').
+        room_descriptions at: 'trap_corridor_b' put: #('You are going further through corridor, one of the slabs on the north looks suspiciously.').
         room_descriptions at: 'serket_chamber' put: #('The hieroglyphs in this room describe how every cat devotes their life to lasagna, and therefore is cursed dou to its greed').
         room_descriptions at: 'guardian' put: #('You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole').
         room_descriptions at: 'treasure_room' put: #('There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff, one of the slabs on the south of you looks suspiciously.').
         room_descriptions at: 'sarcophagus' put: #('There is a big sarcophagus in the middle of the room').
         room_descriptions at: 'hidden_exit' put: #('There are two statues of cats in this room. Under one of them a small breeze can be felt.' 'You made it to the end, please enter the quit command.').
 
+        doors := Dictionary new.
+        doors at: ('acolyte_chamber_1', 'acolyte_chamber_2') put: (MoonlightDoor new init: 'Moonlight Door').
+        doors at: ('acolyte_chamber_2', 'serket_chamber') put:    (LockedKeyDoor new init: 'Golden Door').
+
         items := Dictionary new.
-        items at: 'attendant_room'    put: (OrderedCollection new init: {'Key'}).
-        items at: 'acolyte_chamber_1' put: (OrderedCollection new init: {'Torch'}).
-        items at: 'false_floor_room'  put: (OrderedCollection new init: {'Floating Crystal'}).
+        items at: 'attendant_room'    put: (self initOrderedCollection: 'Key').
+        items at: 'acolyte_chamber_1' put: (self initOrderedCollection: 'Torch').
+        items at: 'false_floor_room'  put: (self initOrderedCollection: 'Floating Crystal').
 
         enemies := Dictionary new.
         enemies at: 'attendant_room' put: (Enemy new init: 'Skele-cat'        health: 3 defense: 12 strength: 2  damage: 2).
@@ -252,12 +322,18 @@ Object subclass: Game [
     ]
 
     move: direction [
-        | new_room |
-        new_room := (paths at: ((player getCurrentRoom), direction) ifAbsent: [player getCurrentRoom]).
-        new_room == (player getCurrentRoom) ifFalse: [
-            player setCurrentRoom: new_room.
-            self look.
-            ^true.
+        | new_room door |
+        new_room := (paths at: ((player getCurrentRoom), direction) ifAbsent: ['']).
+        (new_room == '') ifFalse: [
+            door := (doors at: ((player getCurrentRoom), new_room) ifAbsent: [doors at: (new_room, (player getCurrentRoom)) ifAbsent: ['']]).
+            (door == '' or: [door ~= '' & (door unlocked: player itemList: items)]) ifTrue: [
+                player setCurrentRoom: new_room.
+                self look.
+                ^true.
+            ] ifFalse: [
+                IOModule new printLines: {door getName, ' is locked.'}.
+                ^false.
+            ]
         ] ifTrue: [
             IOModule new printLines: #('There is no way there.').
             ^false.
@@ -304,7 +380,6 @@ Object subclass: Game [
             IOModule new printLines: {'You cannot take items in room when there is ', (enemy getName), ' in it.' }, #('').
         ] ifTrue: [
             locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
-            IOModule new printLines: locatedItems.
             (locatedItems includes: item) ifTrue: [
                 player addItem: item.
                 collection := items at: (player getCurrentRoom).
