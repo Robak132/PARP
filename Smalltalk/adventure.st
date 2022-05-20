@@ -89,6 +89,7 @@ Object subclass: Enemy [
         ^(health = 0)
     ]
 ]
+
 Enemy subclass: Player [
     | currentlyAt inventory |
     Player class >> new [
@@ -109,7 +110,11 @@ Enemy subclass: Player [
     ]
     harm: damage [
         super harm: damage.
-        IOModule new printLines: {'Remaining HP: ', health displayString}.
+        (health <= 0) ifTrue: [
+            IOModule new printLines: {name, ' is dead.'}.
+        ] ifFalse: [
+            IOModule new printLines: {'Remaining HP: ', health displayString}.
+        ]
     ]
     getCurrentRoom [
         ^currentlyAt
@@ -127,6 +132,16 @@ Enemy subclass: Player [
         inventory remove: item
     ]
 ]
+
+OrderedCollection extend [
+    init: list [
+        | collection |
+        collection := OrderedCollection new.
+        collection addAll: list.
+        ^list
+    ]
+]
+
 Object subclass: Game [
     | player paths enemies items room_descriptions isGameOver |
  
@@ -139,7 +154,6 @@ Object subclass: Game [
 
     init [
         player := (Player new init: 6 defense: 12 strength: 0  damage: 4).
-        Transcript show: (player getDefense displayString).
         isGameOver := false.
 
         paths := Dictionary new.
@@ -165,14 +179,12 @@ Object subclass: Game [
         paths at: ('trap_corridor_a', 'S') put: 'false_floor_room'.
         paths at: ('trap_corridor_a', 'N') put: 'trap_corridor_b'.
         paths at: ('trap_corridor_b', 'S') put: 'trap_corridor_a'.
-        paths at: ('trap_corridor_b', 'N') put: 'trap_corridor_c'.
-        paths at: ('trap_corridor_c', 'S') put: 'trap_corridor_b'.
-        paths at: ('trap_corridor_c', 'N') put: 'treasure_room'.
+        paths at: ('trap_corridor_b', 'N') put: 'treasure_room'.
         paths at: ('serket_chamber', 'W') put: 'acolyte_chamber_2'.
         paths at: ('serket_chamber', 'N') put: 'guardian'.
         paths at: ('guardian', 'S') put: 'serket_chamber'.
         paths at: ('guardian', 'N') put: 'sarcophagus'.
-        paths at: ('treasure_room', 'S') put: 'trap_corridor_c'.
+        paths at: ('treasure_room', 'S') put: 'trap_corridor_b'.
         paths at: ('treasure_room', 'N') put: 'hidden_exit'.
         paths at: ('sarcophagus', 'S') put: 'guardian'.
         paths at: ('sarcophagus', 'E') put: 'hidden_exit'.
@@ -188,18 +200,19 @@ Object subclass: Game [
         room_descriptions at: 'acolyte_chamber_1' put: #('You are in yet another room. You see door with a symbol of the moon and long shadows.').
         room_descriptions at: 'acolyte_chamber_2' put: #('You see tombs of important cats. Unfortunately cats cant read, so you dont know their names.').
         room_descriptions at: 'altar_room' put: #('You walked to the room with big altar in the middle.').
-        room_descriptions at: 'false_floor_room' put: #('The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built.').
-        room_descriptions at: 'trap_corridor_a' put: #('You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that.').
+        room_descriptions at: 'false_floor_room' put: #('The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built. You see massive blades falling from the roof and reseting after that on the north.').
+        room_descriptions at: 'trap_corridor_a' put: #('You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that on your south.').
+        room_descriptions at: 'trap_corridor_a' put: #('You are going further through corridor, one of the slabs on the north looks suspiciously.').
         room_descriptions at: 'serket_chamber' put: #('The hieroglyphs in this room describe how every cat devotes their life to lasagna, and therefore is cursed dou to its greed').
         room_descriptions at: 'guardian' put: #('You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole').
-        room_descriptions at: 'treasure_room' put: #('There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff').
+        room_descriptions at: 'treasure_room' put: #('There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff, one of the slabs on the south of you looks suspiciously.').
         room_descriptions at: 'sarcophagus' put: #('There is a big sarcophagus in the middle of the room').
         room_descriptions at: 'hidden_exit' put: #('There are two statues of cats in this room. Under one of them a small breeze can be felt.' 'You made it to the end, please enter the quit command.').
 
         items := Dictionary new.
-        items at: 'attendant_room'    put: (self initOrderedCollection: 'Key').
-        items at: 'acolyte_chamber_1' put: (self initOrderedCollection: 'Torch').
-        items at: 'false_floor_room'  put: (self initOrderedCollection: 'Floating Crystal').
+        items at: 'attendant_room'    put: (OrderedCollection new init: {'Key'}).
+        items at: 'acolyte_chamber_1' put: (OrderedCollection new init: {'Torch'}).
+        items at: 'false_floor_room'  put: (OrderedCollection new init: {'Floating Crystal'}).
 
         enemies := Dictionary new.
         enemies at: 'attendant_room' put: (Enemy new init: 'Skele-cat'        health: 3 defense: 12 strength: 2  damage: 2).
@@ -335,7 +348,7 @@ Object subclass: Game [
         IOModule new printLines: #('').
 
         "Game loop."
-        [player notAlive | isGameOver] whileFalse: [
+        [isGameOver] whileFalse: [
             | cmd args argument isUnknown |
             isUnknown := true.
             args := (IOModule new readCommand) substrings.
@@ -411,8 +424,12 @@ Object subclass: Game [
 
             isUnknown ifTrue: [
                 IOModule new printLines: #('Unknown command.' '')
-            ]
-        ]
+            ].
+            
+            (player alive) ifFalse: [
+                isGameOver := true.
+            ].
+        ].
     ]
 ]
 
