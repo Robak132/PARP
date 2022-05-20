@@ -199,15 +199,6 @@ Door subclass: MoonlightDoor [
     ]
 ]
 
-OrderedCollection extend [
-    init: list [
-        | collection |
-        collection := OrderedCollection new.
-        collection addAll: list.
-        ^list
-    ]
-]
-
 Object subclass: Game [
     | player paths doors enemies items room_descriptions isGameOver  |
  
