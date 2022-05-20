@@ -1,5 +1,41 @@
 #!/usr/bin/env gst
 "Doges&Cateons, by Jakub Robaczewski, Paweł Muller, Marianna Gromadzka."
+Object subclass: IOModule [
+    IOModule class >> new [
+        | module |
+        module := super new.
+        ^module.
+    ]
+
+    instructionsText := #(
+        'Available commands are:'
+        'n,  s,  e,  w,                 -- to go in that direction.'   "Working"
+        'flee n, flee s, flee e, flee w -- to flee from combat.'
+        'take Object.                   -- to pick up an object.'      "Working"
+        'drop Object                    -- to put down an object.'     "Working"
+        'look                           -- to look around you again.'  "Working"
+        'search                         -- to search the room.'        "Working"
+        'inventory, i                   -- to check inventory.'        "Working"
+        'attack Enemy                   -- to attack the enemy.'
+        'instructions, help             -- to see this message again.' "Working"
+        'quit                           -- to end the game and quit.'  "Working"
+        ''
+    ).
+ 
+    printLines: anArray [
+        anArray do: [ :string | Transcript show: string; cr ]
+    ]
+
+    printInstructions [
+        self printLines: instructionsText.
+    ]
+
+    readCommand [
+        Transcript show: '> '.
+        ^ FileStream stdin nextLine
+    ]
+]
+
 Object subclass: Enemy [
     | name location health defense strength damage|
     Enemy class >> new [
@@ -20,6 +56,23 @@ Object subclass: Enemy [
     getHealth [
         ^health
     ]
+    attack: enemy [
+        | attackRoll damageRoll |
+        attackRoll:= Random new between: 1 and: 20.
+        damageRoll:= Random new between: 1 and: damage.
+        (attackRoll >= enemy getDefense) ifTrue: [
+            IOModule new printLines: {name, ' attacks ', (enemy getName), ' (', (attackRoll displayString), '>=', (enemy getDefense displayString), ') [', (damageRoll displayString), ' dmg].'}.
+            enemy harm: damageRoll.
+        ] ifFalse: [
+            IOModule new printLines: {name, ' failed to attack ', (enemy getName), ' (', (attackRoll displayString), '<', (enemy getDefense displayString), ').'}.
+        ].
+    ]
+    harm: damage [
+        health := health - damage. 
+        (self notAlive) ifTrue: [
+            IOModule new printLines: {name, ' is dead.'}.
+        ]
+    ]
     getDefense [
         ^defense
     ]
@@ -29,6 +82,12 @@ Object subclass: Enemy [
     getDamage [
         ^damage
     ]
+    alive [
+        ^(health > 0)
+    ]
+    notAlive [
+        ^(health = 0)
+    ]
 ]
 Enemy subclass: Player [
     | currentlyAt inventory |
@@ -37,11 +96,20 @@ Enemy subclass: Player [
         player := super new.
         ^ player
     ]
-
+    attack: enemy [
+        super attack: enemy.
+        (enemy alive) ifTrue: [
+            enemy attack: self.
+        ]
+    ]
     init: health_ defense: defense_ strength: strength_ damage: damage_ [
-        super init: '' health: health_ defense: defense_ strength: strength_ damage: damage_.
         currentlyAt := 'entrance'.
         inventory := OrderedCollection new.
+        ^super init: 'Player' health: health_ defense: defense_ strength: strength_ damage: damage_.
+    ]
+    harm: damage [
+        super harm: damage.
+        IOModule new printLines: {'Remaining HP: ', health displayString}.
     ]
     getCurrentRoom [
         ^currentlyAt
@@ -58,30 +126,9 @@ Enemy subclass: Player [
     removeItem: item [
         inventory remove: item
     ]
-    alive [
-        ^(health > 0)
-    ]
-    notAlive [
-        ^(health = 0)
-    ]
 ]
 Object subclass: Game [
     | player paths enemies items room_descriptions isGameOver |
-
-    instructionsText := #(
-        'Available commands are:'
-        'n,  s,  e,  w,                 -- to go in that direction.'   "Working"
-        'flee n, flee s, flee e, flee w -- to flee from combat.'
-        'take Object.                   -- to pick up an object.'      "Working"
-        'drop Object                    -- to put down an object.'     "Working"
-        'look                           -- to look around you again.'  "Working"
-        'search                         -- to search the room.'        "Working"
-        'inventory, i                   -- to check inventory.'        "Working"
-        'attack Enemy                   -- to attack the enemy.'
-        'instructions, help             -- to see this message again.' "Working"
-        'quit                           -- to end the game and quit.'  "Working"
-        ''
-    ).
  
     Game class >> new [
         | g |
@@ -92,6 +139,7 @@ Object subclass: Game [
 
     init [
         player := (Player new init: 6 defense: 12 strength: 0  damage: 4).
+        Transcript show: (player getDefense displayString).
         isGameOver := false.
 
         paths := Dictionary new.
@@ -149,9 +197,9 @@ Object subclass: Game [
         room_descriptions at: 'hidden_exit' put: #('There are two statues of cats in this room. Under one of them a small breeze can be felt.' 'You made it to the end, please enter the quit command.').
 
         items := Dictionary new.
-        items at: 'attendant_room' put: (self initOrderedCollection: 'Key').
+        items at: 'attendant_room'    put: (self initOrderedCollection: 'Key').
         items at: 'acolyte_chamber_1' put: (self initOrderedCollection: 'Torch').
-        items at: 'false_floor_room' put: (self initOrderedCollection: 'Floating Crystal').
+        items at: 'false_floor_room'  put: (self initOrderedCollection: 'Floating Crystal').
 
         enemies := Dictionary new.
         enemies at: 'attendant_room' put: (Enemy new init: 'Skele-cat'        health: 3 defense: 12 strength: 2  damage: 2).
@@ -166,43 +214,30 @@ Object subclass: Game [
         ^list.
     ]
 
-    "Print strings from array in separate lines."
-    printLines: anArray [
-        anArray do: [ :string | Transcript show: string; cr ]
-    ]
-
-    printInstructions [
-        self printLines: instructionsText.
-    ]
-
-    readCommand [
-        Transcript show: '> '.
-        ^ FileStream stdin nextLine
-    ]
-
     look [
         |enemy|
         enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
-        self printLines: (room_descriptions at: (player getCurrentRoom) ifAbsent: [#('Nothing here, probably an error')]).
-        (enemy = '') ifFalse: [
-            self printLines: {'There is ', (enemy getName), ' here. Time to fight!'}.
+        IOModule new printLines: (room_descriptions at: (player getCurrentRoom) ifAbsent: [#('Nothing here, probably an error')]).
+        (enemy = '' or: [enemy notAlive]) ifFalse: [
+            IOModule new printLines: {'There is ', (enemy getName), ' here. Time to fight!'}.
         ].
     ]
 
     search [
         |locatedItems enemy|
         enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
-        (enemy = '') ifFalse: [
-            self printLines: {'You cannot search this room when there is ', (enemy getName), ' in it.' }, #('').
+        (enemy = '' or: [enemy notAlive]) ifFalse: [
+            IOModule new printLines: {'You cannot search this room when there is ', (enemy getName), ' in it.' }, #('').
         ] ifTrue: [
             locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
             (locatedItems size = 0) ifTrue: [
-                self printLines: #('You found nothing' ), #('').
+                IOModule new printLines: #('You found nothing' ), #('').
             ] ifFalse: [
-                self printLines: #('You found these items:' ), locatedItems, #('').
+                IOModule new printLines: #('You found these items:' ), locatedItems, #('').
             ]
         ].
     ]
+
     move: direction [
         | new_room |
         new_room := (paths at: ((player getCurrentRoom), direction) ifAbsent: [player getCurrentRoom]).
@@ -211,47 +246,60 @@ Object subclass: Game [
             self look.
             ^true.
         ] ifTrue: [
-            self printLines: #('There is no way there.').
+            IOModule new printLines: #('There is no way there.').
             ^false.
         ]
     ]
+
     go: direction [
         | new_room enemy |
         enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
-        (enemy = '') ifFalse: [
-            self printLines: {'You cannot exit room, when is ', (enemy getName), ' in it.' }, #('').
+        (enemy = '' or: [enemy notAlive]) ifFalse: [
+            IOModule new printLines: {'You cannot exit room, when is ', (enemy getName), ' in it.' }, #('').
         ] ifTrue: [
             self move: (direction asUppercase).
-            self printLines: #('').
+            IOModule new  printLines: #('').
         ]
     ]
+
+    attack: temp [
+        | enemy |
+        enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
+        (enemy = '' or: [enemy notAlive]) ifFalse: [
+            player attack: enemy.
+        ] ifTrue: [
+            IOModule new printLines: {'There is no ', temp, ' in this room.'}, #('').
+        ]
+    ]
+
     flee: direction [
         | enemy |
         enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
         (self move: (direction asUppercase)) ifTrue: [
-            (enemy = '') ifFalse: [
-                self printLines: {(enemy getName), ' attacks you when you leave.'}.
+            (enemy = '' or: [enemy notAlive]) ifFalse: [
+                IOModule new printLines: {(enemy getName), ' attacks you when you leave.'}.
+                player harm: 1.
             ]
         ].
-        self printLines: #('').
+        IOModule new  printLines: #('').
     ]
 
     take: item [
         |locatedItems collection enemy|
         enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
-        (enemy = '') ifFalse: [
-            self printLines: {'You cannot take items in room when there is ', (enemy getName), ' in it.' }, #('').
+        (enemy = '' or: [enemy notAlive]) ifFalse: [
+            IOModule new printLines: {'You cannot take items in room when there is ', (enemy getName), ' in it.' }, #('').
         ] ifTrue: [
             locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
-            self printLines: locatedItems.
+            IOModule new printLines: locatedItems.
             (locatedItems includes: item) ifTrue: [
                 player addItem: item.
                 collection := items at: (player getCurrentRoom).
                 collection remove: item.
                 items at: (player getCurrentRoom) put: collection.
-                self printLines: {'You took ', item, ' from the ground.'}.
+                IOModule new printLines: {'You took ', item, ' from the ground.'}.
             ] ifFalse: [
-                self printLines: {'There is no ', item, ' in this room.'}.
+                IOModule new printLines: {'There is no ', item, ' in this room.'}.
             ]
         ]
     ]
@@ -259,17 +307,17 @@ Object subclass: Game [
     drop: item [
         |collection enemy|
         enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
-        (enemy = '') ifFalse: [
-            self printLines: {'You cannot drop items in room when there is ', (enemy getName), ' in it.' }, #('').
+        (enemy = '' or: [enemy notAlive]) ifFalse: [
+            IOModule new printLines: {'You cannot drop items in room when there is ', (enemy getName), ' in it.' }, #('').
         ] ifTrue: [
             (((player getInventory) includes: item)) ifTrue: [
                 player removeItem: item.
                 collection := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
                 collection add: item.
                 items at: (player getCurrentRoom) put: collection.
-                self printLines: {'You drop ', item, ' to the ground.'}.
+                IOModule new printLines: {'You drop ', item, ' to the ground.'}.
             ] ifFalse: [
-                self printLines: {'You dont have ', item, ' in your inventory'}.
+                IOModule new printLines: {'You dont have ', item, ' in your inventory'}.
             ]
         ]
     ]
@@ -281,23 +329,27 @@ Object subclass: Game [
         ^str.
     ]
 
-    "Run the game."
     run [
-        self printInstructions.
+        IOModule new printInstructions.
         self look.
-        self printLines: #('').
+        IOModule new printLines: #('').
 
         "Game loop."
         [player notAlive | isGameOver] whileFalse: [
             | cmd args argument isUnknown |
             isUnknown := true.
-            args := (self readCommand) substrings.
+            args := (IOModule new readCommand) substrings.
             cmd := args first.
             args removeFirst.
             argument := self join: args.
 
+            (cmd = 'attack') ifTrue: [
+                self attack: argument.
+                isUnknown := false
+            ].
+
             ((cmd = 'inventory') | (cmd = 'i')) ifTrue: [
-                self printLines: #('Your inventory:' ), (player getInventory), #('').
+                IOModule new printLines: #('Your inventory:' ), (player getInventory), #('').
                 isUnknown := false
             ].
 
@@ -328,7 +380,7 @@ Object subclass: Game [
 
             (cmd = 'look') ifTrue: [
                 self look.
-                self printLines: #('').
+                IOModule new printLines: #('').
                 isUnknown := false
             ].
 
@@ -338,7 +390,7 @@ Object subclass: Game [
             ].
 
             ((cmd = 'instructions') | (cmd = 'help')) ifTrue: [
-                self printInstructions.
+                IOModule new printInstructions.
                 isUnknown := false
             ].
 
@@ -358,7 +410,7 @@ Object subclass: Game [
             ].
 
             isUnknown ifTrue: [
-                self printLines: #('Unknown command.' '')
+                IOModule new printLines: #('Unknown command.' '')
             ]
         ]
     ]
