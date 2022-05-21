@@ -60,7 +60,7 @@ Object subclass: Enemy [
         | attackRoll damageRoll |
         attackRoll:= Random new between: 1 and: 20.
         damageRoll:= Random new between: 1 and: damage.
-        (attackRoll >= enemy getDefense) ifTrue: [
+        ((attackRoll + strength) >= enemy getDefense) ifTrue: [
             IOModule new printLines: {name, ' attacks ', (enemy getName), ' (', (attackRoll displayString), '>=', (enemy getDefense displayString), ') [', (damageRoll displayString), ' dmg].'}.
             enemy harm: damageRoll.
         ] ifFalse: [
@@ -72,6 +72,9 @@ Object subclass: Enemy [
         (self notAlive) ifTrue: [
             IOModule new printLines: {name, ' is dead.'}.
         ]
+    ]
+    kill [
+        self harm: health.
     ]
     getDefense [
         ^defense
@@ -110,9 +113,7 @@ Enemy subclass: Player [
     ]
     harm: damage [
         super harm: damage.
-        (self notAlive) ifTrue: [
-            IOModule new printLines: {name, ' is dead.'}.
-        ] ifFalse: [
+        (self notAlive) ifFalse: [
             IOModule new printLines: {'Remaining HP: ', health displayString}.
         ]
     ]
@@ -199,9 +200,36 @@ Door subclass: MoonlightDoor [
     ]
 ]
 
+Object subclass: Trap [
+    | name strength damage dodge |
+    Trap class >> new [
+        | trap |
+        trap := super new.
+        ^trap
+    ]
+    init: name_ damage: damage_ dodge: dodge_ [
+        name := name_.
+        damage := damage_.
+        dodge := dodge_.
+    ]
+    getName [
+        ^name
+    ]
+    trigger: player [
+        | dodgeRoll damageRoll |
+        dodgeRoll := Random new between: 1 and: 20.
+        damageRoll := Random new between: 1 and: damage.
+        (dodgeRoll >= dodge) ifTrue: [
+            IOModule new printLines: {name, ' was trigerred [', damageRoll displayString, ' dmg].'}.
+            player harm: damageRoll.
+        ] ifFalse: [
+            IOModule new printLines: {name, ' wasnt trigerred.'}.
+        ]
+    ]
+]
+
 Object subclass: Game [
-    | player paths doors enemies items room_descriptions isGameOver  |
- 
+    | player paths doors enemies items room_descriptions isGameOver traps |
     Game class >> new [
         | g |
         g := super new.
@@ -292,6 +320,10 @@ Object subclass: Game [
         enemies at: 'attendant_room' put: (Enemy new init: 'Skele-cat'        health: 3 defense: 12 strength: 2  damage: 2).
         enemies at: 'guardian'       put: (Enemy new init: 'Catmint Guardian' health: 9 defense: 9  strength: -4 damage: 6).
         enemies at: 'sarcophagus'    put: (Enemy new init: 'Fallen Cat'       health: 6 defense: 12 strength: 0  damage: 4).
+
+        traps := Dictionary new.
+        traps at: ('false_floor_room', 'trap_corridor_a') put: (Trap new init: 'Falling Blades' damage: 6 dodge: 10).
+        traps at: ('trap_corridor_b', 'treasure_room')    put: (Trap new init: 'Moving Slab'    damage: 2 dodge: 6).
     ]
 
     initOrderedCollection: element [
@@ -302,12 +334,30 @@ Object subclass: Game [
     ]
 
     look [
-        |enemy|
-        enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
-        IOModule new printLines: (room_descriptions at: (player getCurrentRoom) ifAbsent: [#('Nothing here, probably an error')]).
-        (enemy = '' or: [enemy notAlive]) ifFalse: [
-            IOModule new printLines: {'There is ', (enemy getName), ' here. Time to fight!'}.
-        ].
+        |enemy full_paths direction|
+        (player alive) ifTrue: [
+            enemy := (enemies at: (player getCurrentRoom) ifAbsent: ['']).
+            IOModule new printLines: (room_descriptions at: (player getCurrentRoom) ifAbsent: [#('Nothing here, probably an error')]).
+            
+            full_paths := OrderedCollection new.
+            ((paths at: (player getCurrentRoom, 'N') ifAbsent: ['']) = '') ifFalse: [
+                full_paths add: 'N'.
+            ].
+            ((paths at: (player getCurrentRoom, 'S') ifAbsent: ['']) = '') ifFalse: [
+                full_paths add: 'S'.
+            ].
+            ((paths at: (player getCurrentRoom, 'E') ifAbsent: ['']) = '') ifFalse: [
+                full_paths add: 'E'.
+            ].
+            ((paths at: (player getCurrentRoom, 'W') ifAbsent: ['']) = '') ifFalse: [
+                full_paths add: 'W'.
+            ].
+            IOModule new printLines: {'You may go from here to: ', (self join: full_paths with: ', '), '.'}.
+
+            (enemy = '' or: [enemy notAlive]) ifFalse: [
+                IOModule new printLines: {'There is ', (enemy getName), ' here. Time to fight!'}.
+            ].
+        ]
     ]
 
     search [
@@ -326,11 +376,15 @@ Object subclass: Game [
     ]
 
     move: direction [
-        | new_room door |
+        | new_room door trap |
         new_room := (paths at: ((player getCurrentRoom), direction) ifAbsent: ['']).
         (new_room == '') ifFalse: [
             door := (doors at: ((player getCurrentRoom), new_room) ifAbsent: [doors at: (new_room, (player getCurrentRoom)) ifAbsent: ['']]).
             (door == '' or: [door ~= '' & (door unlocked: player itemList: items)]) ifTrue: [
+                trap := (traps at: ((player getCurrentRoom), new_room) ifAbsent: [traps at: (new_room, (player getCurrentRoom)) ifAbsent: ['']]).
+                (trap == '') ifFalse: [
+                    trap trigger: player.
+                ].
                 player setCurrentRoom: new_room.
                 self look.
                 ^true.
@@ -385,11 +439,16 @@ Object subclass: Game [
         ] ifTrue: [
             locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
             (locatedItems includes: item) ifTrue: [
-                player addItem: item.
-                collection := items at: (player getCurrentRoom).
-                collection remove: item.
-                items at: (player getCurrentRoom) put: collection.
-                IOModule new printLines: {'You took ', item, ' from the ground.'}.
+                (item = 'Floating Crystal') ifTrue: [
+                    IOModule new printLines: {'You tried to grab the crystal, but floor collapsed under you. You fall into spikes.'}.
+                    player kill.
+                ] ifFalse: [
+                    player addItem: item.
+                    collection := items at: (player getCurrentRoom).
+                    collection remove: item.
+                    items at: (player getCurrentRoom) put: collection.
+                    IOModule new printLines: {'You took ', item, ' from the ground.'}.
+                ]
             ] ifFalse: [
                 IOModule new printLines: {'There is no ', item, ' in this room.'}.
             ]
@@ -414,10 +473,10 @@ Object subclass: Game [
         ]
     ]
 
-    join: list [
+    join: list with: with_  [
         | str |
         str := ''.
-        list do: [:each | str := ((str = '') ifTrue: [each] ifFalse: [str, ' ', each])].
+        list do: [:each | str := ((str = '') ifTrue: [each] ifFalse: [str, with_, each])].
         ^str.
     ]
 
@@ -433,7 +492,7 @@ Object subclass: Game [
             args := (IOModule new readCommand) substrings.
             cmd := args first.
             args removeFirst.
-            argument := self join: args.
+            argument := self join: args with: ''.
 
             (cmd = 'attack') ifTrue: [
                 self attack.
