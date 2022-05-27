@@ -21,6 +21,7 @@ path(attendant_room, w, antechamber).
 path(attendant_room, n, corridor).
 path(corridor, n, false_floor_room).
 path(corridor, w, altar_room).
+path(corridor, s, attendant_room).
 path(acolyte_chamber_1, n, acolyte_chamber_2).
 path(acolyte_chamber_1, e, jar_room).
 path(acolyte_chamber_2, s, acolyte_chamber_1).
@@ -39,7 +40,7 @@ path(treasure_room, s, trap_corridor).
 path(treasure_room, n, hidden_exit).
 path(sarcophagus, s, guardian).
 path(sarcophagus, e, hidden_exit).
-path(hidden_exit, n, sarcophagus).
+path(hidden_exit, w, sarcophagus).
 path(hidden_exit, s, treasure_room).
 
 % Door

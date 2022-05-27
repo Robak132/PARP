@@ -1,5 +1,6 @@
 module Traps where
     data Trap = Trap {
+        name :: String,
         location_from :: String,
         location_to :: String,
         damage :: Int,
@@ -7,7 +8,7 @@ module Traps where
     } deriving (Show)
 
     bladeTrap :: Trap
-    bladeTrap = Trap "false_floor_room" "trap_corridor_a" 6 10
+    bladeTrap = Trap "Falling Blade" "false_floor_room" "trap_corridor" 6 10
 
     slabTrap :: Trap
-    slabTrap = Trap "trap_corridor_b" "treasure_room" 2 6
+    slabTrap = Trap "Fake Slab" "trap_corridor" "treasure_room" 2 6

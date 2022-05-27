@@ -4,7 +4,7 @@ module Room where
     import Character (Character(name, location, health), alive)
     import Combat (harm)
     import Doors (Door (location_from, location_to, status, name), moonlightDoor, goldDoor)
-    import Traps (Trap (location_from, location_to, dodge, damage))
+    import Traps (Trap (name, location_from, location_to, dodge, damage, Trap))
     import Items (Item(Item, itemLocation, name), torch, key)
 
     data RoomConnection = RoomConnection {
@@ -26,6 +26,7 @@ module Room where
         RoomConnection "attendant_room" "N" "corridor",
         RoomConnection "corridor" "N" "false_floor_room",
         RoomConnection "corridor" "W" "altar_room",
+        RoomConnection "corridor" "S" "attendant_room",
         RoomConnection "acolyte_chamber_1" "N" "acolyte_chamber_2",
         RoomConnection "acolyte_chamber_1" "E" "jar_room",
         RoomConnection "acolyte_chamber_2" "S" "acolyte_chamber_1",
@@ -33,20 +34,18 @@ module Room where
         RoomConnection "altar_room" "S" "antechamber",
         RoomConnection "altar_room" "E" "corridor",
         RoomConnection "false_floor_room" "S" "corridor",
-        RoomConnection "false_floor_room" "N" "trap_corridor_a",
-        RoomConnection "trap_corridor_a" "S" "false_floor_room",
-        RoomConnection "trap_corridor_a" "N" "trap_corridor_b",
-        RoomConnection "trap_corridor_b" "S" "trap_corridor_a",
-        RoomConnection "trap_corridor_b" "N" "treasure_room",
+        RoomConnection "false_floor_room" "N" "trap_corridor",
+        RoomConnection "trap_corridor" "S" "false_floor_room",
+        RoomConnection "trap_corridor" "N" "treasure_room",
         RoomConnection "serket_chamber" "W" "acolyte_chamber_2",
         RoomConnection "serket_chamber" "N" "guardian",
         RoomConnection "guardian" "S" "serket_chamber",
         RoomConnection "guardian" "N" "sarcophagus",
-        RoomConnection "treasure_room" "S" "trap_corridor_c",
+        RoomConnection "treasure_room" "S" "trap_corridor",
         RoomConnection "treasure_room" "N" "hidden_exit",
         RoomConnection "sarcophagus" "S" "guardian",
         RoomConnection "sarcophagus" "E" "hidden_exit",
-        RoomConnection "hidden_exit" "N" "sarcophagus",
+        RoomConnection "hidden_exit" "W" "sarcophagus",
         RoomConnection "hidden_exit" "S" "treasure_room"
         ]
 
@@ -66,8 +65,7 @@ module Room where
         RoomDescription "acolyte_chamber_2" ["You see tombs of important cats. Unfortunately cats can\'t read, so you don\'t know their names."],
         RoomDescription "altar_room" ["You walked to the room with big altar in the middle."],
         RoomDescription "false_floor_room" ["The centre of the room has a marble table with a floating purple crystal. The floor in the middle looks cracked and hastily built. You see massive blades falling from the roof and reseting after that on the north."],
-        RoomDescription "trap_corridor_a" ["You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that on your south."],
-        RoomDescription "trap_corridor_b" ["You are going further through corridor, one of the slabs on the north looks suspiciously."],
+        RoomDescription "trap_corridor" ["You have entered yet another dark corridor. You see massive blades falling from the roof and reseting after that on your south, one of the slabs on the north looks suspiciously."],
         RoomDescription "serket_chamber" ["The hieroglyphs in this room describe how every cat devotes their life to lasagna, and therefore is cursed dou to its greed"],
         RoomDescription "guardian" ["You are in the room lit with hundreds of candles. In the middle there is a guardian, chained to a metal pole"],
         RoomDescription "treasure_room" ["There is a variety of treasure, such as bones and tennis balls. There is also some ancient stuff, one of the slabs on the south of you looks suspiciously."],
@@ -91,9 +89,9 @@ module Room where
                 let (damageRoll, modifiedState2) = randInt (1, Traps.damage trap) modifiedState
                 let (modifiedCharacter, modifiedState3) = harm (you modifiedState2) damageRoll modifiedState2
 
-                lookAdd modifiedState3 {comment=["Trap was trigerred [" ++ show damageRoll ++ " dmg]. Remaining HP " ++ show (health modifiedCharacter)], you = ((you modifiedState3) {location = to room})}
+                lookAdd modifiedState3 {comment=[Traps.name trap ++ " was trigerred [" ++ show damageRoll ++ " dmg]. Remaining HP " ++ show (health modifiedCharacter) ++ "."], you = ((you modifiedState3) {location = to room})}
             else
-                lookAdd modifiedState {comment=["Trap wasn't trigerred"], you = ((you modifiedState) {location = to room})}
+                lookAdd modifiedState {comment=[Traps.name trap ++ " wasn't trigerred"], you = ((you modifiedState) {location = to room})}
 
     checkDoors :: RoomConnection -> State -> State
     checkDoors room state = case List.find (\x -> from room == Doors.location_from x && to room == Doors.location_to x || from room == Doors.location_to x && to room == Doors.location_from x) (doors state)  of
