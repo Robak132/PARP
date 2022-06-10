@@ -65,12 +65,13 @@ Object subclass: Enemy [
             enemy harm: damageRoll.
         ] ifFalse: [
             IOModule new printLines: {name, ' failed to attack ', (enemy getName), ' (', (attackRoll displayString), '<', (enemy getDefense displayString), ').'}.
+            enemy harm: 0.
         ].
     ]
     harm: damage [
         health := health - damage. 
         (self notAlive) ifTrue: [
-            IOModule new printLines: {name, ' is dead.'}.
+            IOModule new printLines: {name, ' is dead.'}, #('').
         ]
     ]
     kill [
@@ -114,7 +115,7 @@ Enemy subclass: Player [
     harm: damage [
         super harm: damage.
         (self notAlive) ifFalse: [
-            IOModule new printLines: {'Remaining HP: ', health displayString}.
+            IOModule new printLines: {'Remaining HP: ', health displayString}, #('').
         ]
     ]
     getCurrentRoom [
@@ -175,6 +176,9 @@ Door subclass: LockedKeyDoor [
             (player hasItem: 'Key') ifTrue: [
                 status := true.
                 IOModule new printLines: {name, ' was unlocked.'}.
+                ^true.
+            ] ifFalse: [
+                ^false.
             ]
         ]
     ]
@@ -440,17 +444,17 @@ Object subclass: Game [
             locatedItems := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
             (locatedItems includes: item) ifTrue: [
                 (item = 'Floating Crystal') ifTrue: [
-                    IOModule new printLines: {'You tried to grab the crystal, but floor collapsed under you. You fall into spikes.'}.
+                    IOModule new printLines: {'You tried to grab the crystal, but floor collapsed under you. You fall into spikes.'}, #('').
                     player kill.
                 ] ifFalse: [
                     player addItem: item.
                     collection := items at: (player getCurrentRoom).
                     collection remove: item.
                     items at: (player getCurrentRoom) put: collection.
-                    IOModule new printLines: {'You took ', item, ' from the ground.'}.
+                    IOModule new printLines: {'You took ', item, ' from the ground.'}, #('').
                 ]
             ] ifFalse: [
-                IOModule new printLines: {'There is no ', item, ' in this room.'}.
+                IOModule new printLines: {'There is no ', item, ' in this room.'}, #('').
             ]
         ]
     ]
@@ -466,9 +470,9 @@ Object subclass: Game [
                 collection := items at: (player getCurrentRoom) ifAbsent: [OrderedCollection new].
                 collection add: item.
                 items at: (player getCurrentRoom) put: collection.
-                IOModule new printLines: {'You drop ', item, ' to the ground.'}.
+                IOModule new printLines: {'You drop ', item, ' to the ground.'}, #('').
             ] ifFalse: [
-                IOModule new printLines: {'You dont have ', item, ' in your inventory'}.
+                IOModule new printLines: {'You dont have ', item, ' in your inventory'}, #('').
             ]
         ]
     ]
